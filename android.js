@@ -53,6 +53,9 @@ class MobileVikingSettlementTycoon {
         this.gameRunning = true;
         
         this.init();
+        
+        // Trigger visual effects when appropriate
+        this.setupVisualTriggers();
     }
     
     collectDeviceInfo() {
@@ -318,16 +321,16 @@ class MobileVikingSettlementTycoon {
         const worldPos = this.screenToWorld(screenX, screenY);
         const buildingData = this.getBuildingData(this.selectedBuilding);
         
-        if (!buildingData) return;
+        if (!buildingData) return false;
         
         if (!this.canAfford(buildingData.cost)) {
             this.showMobileNotification('Not enough resources!', 'error');
-            return;
+            return false;
         }
         
         if (!this.isValidPlacement(worldPos.x, worldPos.y)) {
             this.showMobileNotification('Invalid location!', 'warning');
-            return;
+            return false;
         }
         
         this.addBuilding(this.selectedBuilding, worldPos.x, worldPos.y);
@@ -335,6 +338,7 @@ class MobileVikingSettlementTycoon {
         this.cancelMobilePlacement();
         
         this.showMobileNotification(`${buildingData.name} built!`, 'success');
+        return true; // Indicate successful placement
     }
     
     cancelMobilePlacement() {
@@ -1497,6 +1501,40 @@ class MobileVikingSettlementTycoon {
             const [tileX, tileY] = areaKey.split(',').map(Number);
             this.revealArea(tileX, tileY, 30);
         }
+    }
+    
+    setupVisualTriggers() {
+        // Override building placement to trigger visual effects
+        const originalTryPlace = this.tryPlaceMobileBuilding.bind(this);
+        this.tryPlaceMobileBuilding = (screenX, screenY) => {
+            const result = originalTryPlace(screenX, screenY);
+            if (result !== false) { // If building was placed successfully
+                // Trigger building placement effect
+                if (window.triggerBuildingEffect) {
+                    window.triggerBuildingEffect(screenX, screenY);
+                }
+            }
+            return result;
+        };
+        
+        // Override scout dispatch to trigger exploration effects
+        const originalSendScout = this.sendScoutToExplore.bind(this);
+        this.sendScoutToExplore = (x, y) => {
+            originalSendScout(x, y);
+            
+            // Convert world coordinates to screen coordinates for visual effect
+            const screenPos = this.worldToScreen(x, y);
+            if (window.triggerExplorationEffect) {
+                window.triggerExplorationEffect(screenPos.x, screenPos.y);
+            }
+        };
+    }
+    
+    worldToScreen(worldX, worldY) {
+        return {
+            x: (worldX - this.camera.x) * this.camera.scale,
+            y: (worldY - this.camera.y) * this.camera.scale
+        };
     }
     
     update(deltaTime) {
