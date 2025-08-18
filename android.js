@@ -21,9 +21,15 @@ class MobileVikingSettlementTycoon {
         
         // Mobile-specific properties
         this.activeTab = 'buildings';
+        // Enhanced touch handling for zoom
         this.touchStartTime = 0;
         this.longPressThreshold = 800; // 800ms for long press
         this.longPressTimer = null;
+        this.lastTapTime = 0;
+        this.doubleTapThreshold = 300; // 300ms for double tap
+        this.pinchStartDistance = 0;
+        this.pinchStartScale = 1;
+        this.isPinching = false;
         
         // Enhanced infinite terrain system (mobile optimized)
         this.chunkSize = 256; // Smaller chunks for mobile performance
@@ -180,6 +186,9 @@ class MobileVikingSettlementTycoon {
         this.canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: false });
         this.canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
         this.canvas.addEventListener('touchend', (e) => this.handleTouchEnd(e), { passive: false });
+        
+        // Prevent context menu on long press
+        this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
     }
     
     switchTab(tabName) {
@@ -212,12 +221,34 @@ class MobileVikingSettlementTycoon {
         this.showMobileNotification(`Tap the map to place ${buildingType}`, 'success');
     }
     
+    getTouchDistance(touch1, touch2) {
+        const dx = touch1.clientX - touch2.clientX;
+        const dy = touch1.clientY - touch2.clientY;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+    
+    getTouchCenter(touch1, touch2) {
+        return {
+            x: (touch1.clientX + touch2.clientX) / 2,
+            y: (touch1.clientY + touch2.clientY) / 2
+        };
+    }
+
     handleTouchStart(e) {
         e.preventDefault();
         
         if (e.touches.length === 1) {
             const touch = e.touches[0];
             const rect = this.canvas.getBoundingClientRect();
+            
+            // Check for double tap
+            const now = Date.now();
+            if (now - this.lastTapTime < this.doubleTapThreshold) {
+                this.handleDoubleTap(touch.clientX - rect.left, touch.clientY - rect.top);
+                this.lastTapTime = 0; // Reset to prevent triple tap
+                return;
+            }
+            this.lastTapTime = now;
             
             this.touchState = {
                 active: true,
@@ -234,13 +265,24 @@ class MobileVikingSettlementTycoon {
                     this.handleLongPress();
                 }
             }, this.longPressThreshold);
+        } else if (e.touches.length === 2) {
+            // Start pinch zoom
+            this.isPinching = true;
+            this.pinchStartDistance = this.getTouchDistance(e.touches[0], e.touches[1]);
+            this.pinchStartScale = this.camera.scale;
+            
+            // Clear any existing timers
+            if (this.longPressTimer) {
+                clearTimeout(this.longPressTimer);
+                this.longPressTimer = null;
+            }
         }
     }
     
     handleTouchMove(e) {
         e.preventDefault();
         
-        if (this.touchState.active && e.touches.length === 1) {
+        if (e.touches.length === 1 && this.touchState.active && !this.isPinching) {
             const touch = e.touches[0];
             const rect = this.canvas.getBoundingClientRect();
             
@@ -259,11 +301,36 @@ class MobileVikingSettlementTycoon {
             }
             
             // Pan camera
-            this.camera.x -= dx * 0.5;
-            this.camera.y -= dy * 0.5;
+            this.camera.x -= dx * 0.8 / this.camera.scale;
+            this.camera.y -= dy * 0.8 / this.camera.scale;
             
             this.touchState.startX = this.touchState.currentX;
             this.touchState.startY = this.touchState.currentY;
+        } else if (e.touches.length === 2 && this.isPinching) {
+            // Handle pinch zoom
+            const currentDistance = this.getTouchDistance(e.touches[0], e.touches[1]);
+            const scaleFactor = currentDistance / this.pinchStartDistance;
+            
+            // Apply zoom with limits
+            const newScale = Math.max(0.3, Math.min(3, this.pinchStartScale * scaleFactor));
+            
+            // Get touch center for zoom focus
+            const rect = this.canvas.getBoundingClientRect();
+            const center = this.getTouchCenter(e.touches[0], e.touches[1]);
+            const centerX = center.x - rect.left;
+            const centerY = center.y - rect.top;
+            
+            // Convert to world coordinates
+            const worldX = (centerX / this.camera.scale) + this.camera.x;
+            const worldY = (centerY / this.camera.scale) + this.camera.y;
+            
+            // Apply new scale
+            const oldScale = this.camera.scale;
+            this.camera.scale = newScale;
+            
+            // Adjust camera position to zoom towards touch center
+            this.camera.x = worldX - (centerX / this.camera.scale);
+            this.camera.y = worldY - (centerY / this.camera.scale);
         }
     }
     
@@ -275,19 +342,52 @@ class MobileVikingSettlementTycoon {
             this.longPressTimer = null;
         }
         
-        if (this.touchState.active) {
-            const touchDuration = Date.now() - this.touchState.startTime;
-            const dx = Math.abs(this.touchState.currentX - this.touchState.startX);
-            const dy = Math.abs(this.touchState.currentY - this.touchState.startY);
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            
-            // If it was a quick tap (not a drag or long press)
-            if (touchDuration < this.longPressThreshold && distance < 20) {
-                this.handleTap(this.touchState.currentX, this.touchState.currentY);
+        if (e.touches.length === 0) {
+            // All touches ended
+            if (this.touchState.active && !this.isPinching) {
+                const touchDuration = Date.now() - this.touchState.startTime;
+                const dx = Math.abs(this.touchState.currentX - this.touchState.startX);
+                const dy = Math.abs(this.touchState.currentY - this.touchState.startY);
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                // If it was a quick tap (not a drag or long press)
+                if (touchDuration < this.longPressThreshold && distance < 20) {
+                    // Wait a bit to check for double tap, otherwise handle as single tap
+                    setTimeout(() => {
+                        if (Date.now() - this.lastTapTime > this.doubleTapThreshold) {
+                            this.handleTap(this.touchState.currentX, this.touchState.currentY);
+                        }
+                    }, this.doubleTapThreshold + 50);
+                }
             }
+            
+            this.touchState.active = false;
+            this.isPinching = false;
+        } else if (e.touches.length === 1 && this.isPinching) {
+            // One finger lifted during pinch, end pinch mode
+            this.isPinching = false;
         }
+    }
+    
+    handleDoubleTap(x, y) {
+        // Zoom in on double tap
+        const zoomFactor = this.camera.scale < 1.5 ? 1.8 : 0.6;
         
-        this.touchState.active = false;
+        // Convert tap position to world coordinates
+        const worldX = (x / this.camera.scale) + this.camera.x;
+        const worldY = (y / this.camera.scale) + this.camera.y;
+        
+        // Apply new scale with limits
+        this.camera.scale = Math.max(0.3, Math.min(3, this.camera.scale * zoomFactor));
+        
+        // Adjust camera to keep the tapped point centered
+        this.camera.x = worldX - (x / this.camera.scale);
+        this.camera.y = worldY - (y / this.camera.scale);
+        
+        this.showMobileNotification(
+            this.camera.scale > 1.5 ? 'Zoomed in!' : 'Zoomed out!', 
+            'success'
+        );
     }
     
     handleTap(x, y) {

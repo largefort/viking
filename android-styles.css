@@ -136,23 +136,26 @@ body {
     touch-action: none;
 }
 
+/* Enhanced touch controls overlay */
 #touchControlsOverlay {
     position: absolute;
-    bottom: 10px;
-    left: 10px;
-    right: 10px;
+    bottom: 15px;
+    left: 15px;
+    right: 15px;
     pointer-events: none;
     z-index: 100;
 }
 
 .touch-hint {
-    background: rgba(0,0,0,0.7);
+    background: rgba(0,0,0,0.8);
     color: #ffffff;
-    padding: 8px 12px;
-    border-radius: 6px;
+    padding: 10px 16px;
+    border-radius: 8px;
     font-size: 0.7rem;
     text-align: center;
-    opacity: 0.8;
+    opacity: 0.9;
+    border: 1px solid rgba(212,175,55,0.3);
+    line-height: 1.3;
 }
 
 /* Mobile Bottom Panel */
@@ -160,28 +163,31 @@ body {
     background: linear-gradient(135deg, #2c1810 0%, #3d2318 100%);
     border-top: 2px solid #8b4513;
     box-shadow: 0 -2px 8px rgba(0,0,0,0.5);
-    max-height: 180px;
+    max-height: 200px;
     overflow: hidden;
+    position: relative;
 }
 
 /* Mobile Tab Navigation */
 #mobileTabNav {
     display: flex;
     border-bottom: 1px solid #8b4513;
+    background: rgba(0,0,0,0.2);
 }
 
 .mobile-tab {
     flex: 1;
-    padding: 10px 4px;
+    padding: 12px 6px;
     background: transparent;
     color: #cccccc;
     border: none;
     font-family: inherit;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s ease;
-    border-bottom: 2px solid transparent;
+    border-bottom: 3px solid transparent;
+    text-align: center;
 }
 
 .mobile-tab.active {
@@ -192,14 +198,16 @@ body {
 
 .mobile-tab:active {
     background: rgba(212,175,55,0.2);
+    transform: scale(0.98);
 }
 
 /* Mobile Tab Content */
 .mobile-tab-content {
     display: none;
-    padding: 12px;
-    height: 130px;
+    padding: 15px 12px;
+    height: 140px;
     overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .mobile-tab-content.active {
@@ -210,21 +218,25 @@ body {
 .mobile-building-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
+    gap: 10px;
+    padding: 2px;
 }
 
 .mobile-building-card {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: 4px;
-    padding: 8px 4px;
+    padding: 10px 6px;
     background: rgba(0,0,0,0.4);
     border: 2px solid #654321;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
-    min-height: 80px;
+    min-height: 85px;
+    position: relative;
+    overflow: hidden;
 }
 
 .mobile-building-card:active {
@@ -236,25 +248,30 @@ body {
 .mobile-building-card.selected {
     border-color: #d4af37;
     background: rgba(212,175,55,0.15);
+    box-shadow: 0 0 10px rgba(212,175,55,0.3);
 }
 
 .mobile-building-icon {
-    font-size: 1.3rem;
+    font-size: 1.4rem;
+    margin-bottom: 2px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
 }
 
 .mobile-building-name {
     font-weight: 700;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     color: #f0f0f0;
     text-align: center;
-    line-height: 1;
+    line-height: 1.1;
+    margin-bottom: 2px;
 }
 
 .mobile-building-cost {
-    font-size: 0.6rem;
+    font-size: 0.65rem;
     color: #cccccc;
     text-align: center;
     line-height: 1.2;
+    font-weight: 400;
 }
 
 /* Mobile Stats Grid */
@@ -473,20 +490,35 @@ body {
 /* Responsive Adjustments */
 @media screen and (max-height: 600px) {
     #mobileBottomPanel {
-        max-height: 150px;
+        max-height: 170px;
     }
     
     .mobile-tab-content {
-        height: 100px;
+        height: 110px;
+        padding: 12px 10px;
     }
     
     .mobile-building-card {
-        min-height: 70px;
-        padding: 6px 4px;
+        min-height: 75px;
+        padding: 8px 4px;
+        gap: 3px;
     }
     
     .mobile-building-icon {
-        font-size: 1.1rem;
+        font-size: 1.2rem;
+    }
+    
+    .mobile-building-name {
+        font-size: 0.7rem;
+    }
+    
+    .mobile-building-cost {
+        font-size: 0.6rem;
+    }
+    
+    .mobile-tab {
+        padding: 10px 4px;
+        font-size: 0.7rem;
     }
 }
 
@@ -497,15 +529,38 @@ body {
     
     .mobile-building-grid {
         grid-template-columns: repeat(3, 1fr);
-        gap: 6px;
+        gap: 8px;
     }
     
     .mobile-building-name {
-        font-size: 0.65rem;
+        font-size: 0.7rem;
     }
     
     .mobile-building-cost {
-        font-size: 0.55rem;
+        font-size: 0.6rem;
+    }
+    
+    .mobile-tab {
+        font-size: 0.7rem;
+        padding: 10px 3px;
+    }
+    
+    .mobile-tab-content {
+        padding: 12px 8px;
+    }
+}
+
+@media screen and (max-height: 500px) {
+    #mobileBottomPanel {
+        max-height: 150px;
+    }
+    
+    .mobile-tab-content {
+        height: 90px;
+    }
+    
+    .mobile-building-card {
+        min-height: 65px;
     }
 }
 
