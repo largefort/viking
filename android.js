@@ -756,9 +756,16 @@ class MobileVikingSettlementTycoon {
                 const worldTileX = chunk.worldX + (tileX * this.tileSize);
                 const worldTileY = chunk.worldY + (tileY * this.tileSize);
                 
-                // Generate biome-based terrain
+                // Enhanced biome-based terrain generation with multiple noise layers
                 const biomeData = this.getBiomeAt(worldTileX, worldTileY);
                 const tileType = this.generateBiomeTerrain(worldTileX, worldTileY, biomeData);
+                
+                // Add elevation and moisture data for better terrain variation
+                const elevationNoise = this.seededNoise(worldTileX * 0.008, worldTileY * 0.008);
+                const moistureNoise = this.seededNoise(worldTileX * 0.012 + 1000, worldTileY * 0.012 + 1000);
+                const temperatureNoise = this.seededNoise(worldTileX * 0.006 + 2000, worldTileY * 0.006 + 2000);
+                const detailNoise = this.seededNoise(worldTileX * 0.08, worldTileY * 0.08);
+                const microNoise = this.seededNoise(worldTileX * 0.15 + 500, worldTileY * 0.15 + 500);
                 
                 chunk.tiles.push({
                     localX: tileX * this.tileSize,
@@ -771,53 +778,123 @@ class MobileVikingSettlementTycoon {
                     elevation: biomeData.elevation,
                     temperature: biomeData.temperature,
                     moisture: biomeData.moisture,
+                    elevationNoise: elevationNoise,
+                    moistureNoise: moistureNoise,
+                    temperatureNoise: temperatureNoise,
                     noise: this.seededNoise(worldTileX * 0.02, worldTileY * 0.02),
-                    detailNoise: this.seededNoise(worldTileX * 0.05, worldTileY * 0.05)
+                    detailNoise: detailNoise,
+                    microNoise: microNoise,
+                    // Add geological features
+                    geologicalFeature: this.determineGeologicalFeature(worldTileX, worldTileY, biomeData),
+                    // Add resource deposits
+                    resourceDeposit: this.generateResourceDeposit(worldTileX, worldTileY, biomeData)
                 });
             }
         }
     }
     
     getBiomeAt(x, y) {
-        // Generate multiple noise layers for biome determination
-        const scale = 0.003; // Larger biomes
-        const temperatureNoise = this.seededNoise(x * scale + this.seed, y * scale + this.seed);
-        const moistureNoise = this.seededNoise(x * scale + this.seed + 1000, y * scale + this.seed + 1000);
-        const elevationNoise = this.seededNoise(x * scale * 0.5 + this.seed + 2000, y * scale * 0.5 + this.seed + 2000);
+        // Enhanced multi-layer noise for more complex biome generation
+        const scale = 0.002; // Larger biomes for mobile
+        const subScale = 0.008; // Sub-biome variation
+        
+        // Primary climate layers
+        const temperatureNoise = this.multiOctaveNoise(x * scale + this.seed, y * scale + this.seed, 4);
+        const moistureNoise = this.multiOctaveNoise(x * scale + this.seed + 1000, y * scale + this.seed + 1000, 4);
+        const elevationNoise = this.multiOctaveNoise(x * scale * 0.5 + this.seed + 2000, y * scale * 0.5 + this.seed + 2000, 5);
+        
+        // Secondary variation layers
+        const continentalNoise = this.multiOctaveNoise(x * 0.0005 + this.seed + 3000, y * 0.0005 + this.seed + 3000, 3);
+        const coastalNoise = this.multiOctaveNoise(x * 0.003 + this.seed + 4000, y * 0.003 + this.seed + 4000, 3);
+        const localVariationNoise = this.multiOctaveNoise(x * subScale + this.seed + 5000, y * subScale + this.seed + 5000, 2);
         
         // Normalize to 0-1 range
         const temperature = (temperatureNoise + 1) * 0.5;
         const moisture = (moistureNoise + 1) * 0.5;
-        const elevation = (elevationNoise + 1) * 0.5;
+        const elevation = Math.max(0, Math.min(1, (elevationNoise + continentalNoise * 0.3 + 1) * 0.5));
+        const coastal = (coastalNoise + 1) * 0.5;
+        const variation = (localVariationNoise + 1) * 0.5;
         
-        // Determine primary biome based on temperature, moisture, and elevation
+        // Enhanced biome determination with more variety
         let primaryBiome = 'temperate_plains';
         let biomeStrength = 1.0;
         
-        // Arctic conditions (cold)
-        if (temperature < 0.3) {
-            primaryBiome = 'arctic_tundra';
+        // Continental vs oceanic influence
+        const continentalFactor = (continentalNoise + 1) * 0.5;
+        const isOceanic = continentalFactor < 0.3;
+        const isContinental = continentalFactor > 0.7;
+        
+        // Polar regions (very cold)
+        if (temperature < 0.2) {
+            if (elevation > 0.6) {
+                primaryBiome = 'polar_ice_caps';
+            } else if (moisture > 0.4) {
+                primaryBiome = 'arctic_tundra';
+            } else {
+                primaryBiome = 'arctic_desert';
+            }
         }
-        // Cold forest conditions
-        else if (temperature < 0.5 && moisture > 0.4) {
-            primaryBiome = 'boreal_forest';
+        // Sub-arctic regions
+        else if (temperature < 0.4) {
+            if (elevation > 0.7) {
+                primaryBiome = 'alpine_tundra';
+            } else if (moisture > 0.6) {
+                primaryBiome = 'boreal_forest';
+            } else if (moisture > 0.3) {
+                primaryBiome = 'taiga';
+            } else {
+                primaryBiome = 'cold_steppe';
+            }
         }
-        // Mountainous regions
-        else if (elevation > 0.7) {
-            primaryBiome = 'highland_mountains';
+        // Temperate regions
+        else if (temperature < 0.7) {
+            if (elevation > 0.8) {
+                primaryBiome = 'highland_mountains';
+            } else if (elevation > 0.6) {
+                primaryBiome = 'temperate_mountains';
+            } else if (coastal > 0.7 && elevation < 0.3) {
+                primaryBiome = 'coastal_fjords';
+            } else if (moisture > 0.7) {
+                primaryBiome = 'temperate_rainforest';
+            } else if (moisture > 0.5) {
+                primaryBiome = 'deciduous_forest';
+            } else if (moisture > 0.3) {
+                primaryBiome = 'temperate_plains';
+            } else {
+                primaryBiome = 'temperate_grassland';
+            }
         }
-        // Coastal areas (high moisture, moderate temperature)
-        else if (moisture > 0.6 && temperature > 0.4 && temperature < 0.7) {
-            primaryBiome = 'coastal_fjords';
-        }
-        // Default temperate plains
+        // Warm regions
         else {
-            primaryBiome = 'temperate_plains';
+            if (elevation > 0.7) {
+                primaryBiome = 'warm_mountains';
+            } else if (coastal > 0.6 && elevation < 0.2) {
+                primaryBiome = 'tropical_coast';
+            } else if (moisture > 0.8) {
+                primaryBiome = 'tropical_rainforest';
+            } else if (moisture > 0.5) {
+                primaryBiome = 'subtropical_forest';
+            } else if (moisture > 0.2) {
+                primaryBiome = 'savanna';
+            } else {
+                primaryBiome = 'desert';
+            }
         }
         
-        // Calculate transition zones between biomes
-        const transitionNoise = this.seededNoise(x * 0.01 + this.seed + 3000, y * 0.01 + this.seed + 3000);
-        biomeStrength = Math.max(0.3, Math.min(1.0, biomeStrength + transitionNoise * 0.3));
+        // Apply oceanic/continental modifiers
+        if (isOceanic && elevation < 0.4) {
+            if (temperature > 0.6) {
+                primaryBiome = 'tropical_islands';
+            } else if (temperature > 0.3) {
+                primaryBiome = 'temperate_islands';
+            } else {
+                primaryBiome = 'arctic_islands';
+            }
+        }
+        
+        // Calculate transition zones with improved blending
+        const transitionNoise = this.multiOctaveNoise(x * 0.015 + this.seed + 6000, y * 0.015 + this.seed + 6000, 2);
+        biomeStrength = Math.max(0.4, Math.min(1.0, 0.7 + transitionNoise * 0.3 + variation * 0.2));
         
         return {
             primary: primaryBiome,
@@ -825,32 +902,414 @@ class MobileVikingSettlementTycoon {
             temperature,
             moisture,
             elevation,
-            transitionNoise
+            coastal,
+            continentalFactor,
+            variation,
+            transitionNoise,
+            // Additional climate data
+            seasonality: this.calculateSeasonality(temperature, moisture),
+            windExposure: this.calculateWindExposure(x, y, elevation),
+            drainageClass: this.calculateDrainage(elevation, moisture)
         };
     }
     
-    generateBiomeTerrain(x, y, biomeData) {
-        const detailNoise = this.seededNoise(x * 0.02 + this.seed, y * 0.02 + this.seed);
-        const microNoise = this.seededNoise(x * 0.05 + this.seed + 500, y * 0.05 + this.seed + 500);
+    multiOctaveNoise(x, y, octaves = 4, persistence = 0.5, lacunarity = 2.0) {
+        let value = 0;
+        let amplitude = 1;
+        let frequency = 1;
+        let maxValue = 0;
         
-        // Base terrain generation based on biome
+        for (let i = 0; i < octaves; i++) {
+            value += this.improvedNoise(x * frequency, y * frequency) * amplitude;
+            maxValue += amplitude;
+            amplitude *= persistence;
+            frequency *= lacunarity;
+        }
+        
+        return value / maxValue;
+    }
+    
+    improvedNoise(x, y) {
+        // Enhanced Perlin-like noise with better distribution
+        const xi = Math.floor(x);
+        const yi = Math.floor(y);
+        const xf = x - xi;
+        const yf = y - yi;
+        
+        // Smootherstep function for better interpolation
+        const u = this.smootherstep(xf);
+        const v = this.smootherstep(yf);
+        
+        // Get random values at grid points
+        const aa = this.pseudoRandom(xi, yi);
+        const ab = this.pseudoRandom(xi, yi + 1);
+        const ba = this.pseudoRandom(xi + 1, yi);
+        const bb = this.pseudoRandom(xi + 1, yi + 1);
+        
+        // Interpolate
+        const x1 = this.lerp(aa, ba, u);
+        const x2 = this.lerp(ab, bb, u);
+        
+        return this.lerp(x1, x2, v);
+    }
+    
+    smootherstep(t) {
+        return t * t * t * (t * (t * 6 - 15) + 10);
+    }
+    
+    lerp(a, b, t) {
+        return a + t * (b - a);
+    }
+    
+    pseudoRandom(x, y) {
+        let n = Math.sin(x * 12.9898 + y * 78.233 + this.seed) * 43758.5453;
+        return (n - Math.floor(n)) * 2 - 1;
+    }
+    
+    calculateSeasonality(temperature, moisture) {
+        // Higher values indicate more seasonal variation
+        if (temperature < 0.3 || temperature > 0.8) return 0.2; // Extreme climates less seasonal
+        if (moisture < 0.3) return 0.8; // Dry climates more seasonal
+        return 0.5 + (Math.abs(temperature - 0.5) * 0.6);
+    }
+    
+    calculateWindExposure(x, y, elevation) {
+        // Simulate prevailing wind patterns
+        const windNoise = this.multiOctaveNoise(x * 0.001, y * 0.001, 2);
+        const exposureFactor = elevation > 0.6 ? 0.8 : 0.3;
+        return Math.max(0, Math.min(1, exposureFactor + windNoise * 0.4));
+    }
+    
+    calculateDrainage(elevation, moisture) {
+        // Determine water drainage characteristics
+        if (elevation < 0.2 && moisture > 0.7) return 'poorly_drained';
+        if (elevation > 0.7) return 'well_drained';
+        if (moisture < 0.3) return 'very_well_drained';
+        return 'moderately_drained';
+    }
+    
+    determineGeologicalFeature(x, y, biomeData) {
+        const geologicalNoise = this.multiOctaveNoise(x * 0.005, y * 0.005, 3);
+        const feature = {
+            type: 'normal',
+            intensity: 0
+        };
+        
+        // Determine geological features based on biome and noise
+        if (biomeData.elevation > 0.8) {
+            if (geologicalNoise > 0.6) {
+                feature.type = 'granite_outcrop';
+                feature.intensity = 0.8;
+            } else if (geologicalNoise > 0.3) {
+                feature.type = 'rocky_terrain';
+                feature.intensity = 0.6;
+            }
+        } else if (biomeData.elevation < 0.2 && biomeData.moisture > 0.6) {
+            if (geologicalNoise > 0.4) {
+                feature.type = 'wetland';
+                feature.intensity = 0.7;
+            }
+        } else if (geologicalNoise > 0.7) {
+            if (biomeData.temperature < 0.4) {
+                feature.type = 'glacial_deposit';
+                feature.intensity = 0.5;
+            } else {
+                feature.type = 'fertile_soil';
+                feature.intensity = 0.6;
+            }
+        }
+        
+        return feature;
+    }
+    
+    generateResourceDeposit(x, y, biomeData) {
+        const resourceNoise = this.multiOctaveNoise(x * 0.008 + 7000, y * 0.008 + 7000, 2);
+        const deposit = {
+            type: 'none',
+            richness: 0,
+            accessibility: 1
+        };
+        
+        // Generate resource deposits based on geological conditions
+        if (resourceNoise > 0.8) {
+            if (biomeData.elevation > 0.6) {
+                // Mountain resources
+                if (biomeData.temperature < 0.4) {
+                    deposit.type = 'iron_ore';
+                    deposit.richness = 0.8;
+                    deposit.accessibility = 0.6;
+                } else {
+                    deposit.type = 'stone_quarry';
+                    deposit.richness = 0.7;
+                    deposit.accessibility = 0.8;
+                }
+            } else if (biomeData.moisture > 0.6) {
+                // Forest/wetland resources
+                deposit.type = 'peat_bog';
+                deposit.richness = 0.6;
+                deposit.accessibility = 0.4;
+            } else {
+                // Plains resources
+                deposit.type = 'clay_deposit';
+                deposit.richness = 0.5;
+                deposit.accessibility = 0.9;
+            }
+        } else if (resourceNoise > 0.6) {
+            if (biomeData.coastal > 0.7) {
+                deposit.type = 'salt_deposit';
+                deposit.richness = 0.7;
+                deposit.accessibility = 0.8;
+            } else if (biomeData.elevation < 0.3 && biomeData.moisture > 0.5) {
+                deposit.type = 'fertile_soil';
+                deposit.richness = 0.8;
+                deposit.accessibility = 1.0;
+            }
+        }
+        
+        return deposit;
+    }
+    
+    generateBiomeTerrain(x, y, biomeData) {
+        const detailNoise = biomeData.transitionNoise || this.seededNoise(x * 0.02 + this.seed, y * 0.02 + this.seed);
+        const microNoise = biomeData.variation || this.seededNoise(x * 0.05 + this.seed + 500, y * 0.05 + this.seed + 500);
+        
+        // Enhanced terrain generation with new biomes
         switch (biomeData.primary) {
+            case 'polar_ice_caps':
+                return this.generatePolarTerrain(biomeData, detailNoise, microNoise);
+            
             case 'arctic_tundra':
                 return this.generateArcticTerrain(biomeData, detailNoise, microNoise);
+                
+            case 'arctic_desert':
+                return this.generateArcticDesertTerrain(biomeData, detailNoise, microNoise);
+                
+            case 'alpine_tundra':
+                return this.generateAlpineTundraTerrain(biomeData, detailNoise, microNoise);
             
             case 'boreal_forest':
                 return this.generateBorealTerrain(biomeData, detailNoise, microNoise);
+                
+            case 'taiga':
+                return this.generateTaigaTerrain(biomeData, detailNoise, microNoise);
+                
+            case 'cold_steppe':
+                return this.generateColdSteppeTerrain(biomeData, detailNoise, microNoise);
             
             case 'coastal_fjords':
                 return this.generateCoastalTerrain(biomeData, detailNoise, microNoise);
-            
+                
+            case 'temperate_rainforest':
+                return this.generateTemperateRainforestTerrain(biomeData, detailNoise, microNoise);
+                
+            case 'deciduous_forest':
+                return this.generateDeciduousForestTerrain(biomeData, detailNoise, microNoise);
+                
+            case 'temperate_mountains':
             case 'highland_mountains':
+            case 'warm_mountains':
                 return this.generateMountainTerrain(biomeData, detailNoise, microNoise);
+                
+            case 'temperate_grassland':
+                return this.generateTemperateGrasslandTerrain(biomeData, detailNoise, microNoise);
+                
+            case 'tropical_islands':
+            case 'temperate_islands':
+            case 'arctic_islands':
+                return this.generateIslandTerrain(biomeData, detailNoise, microNoise);
+                
+            case 'tropical_coast':
+                return this.generateTropicalCoastTerrain(biomeData, detailNoise, microNoise);
+                
+            case 'tropical_rainforest':
+                return this.generateTropicalRainforestTerrain(biomeData, detailNoise, microNoise);
+                
+            case 'subtropical_forest':
+                return this.generateSubtropicalForestTerrain(biomeData, detailNoise, microNoise);
+                
+            case 'savanna':
+                return this.generateSavannaTerrain(biomeData, detailNoise, microNoise);
+                
+            case 'desert':
+                return this.generateDesertTerrain(biomeData, detailNoise, microNoise);
             
             case 'temperate_plains':
             default:
                 return this.generateTemperateTerrain(biomeData, detailNoise, microNoise);
         }
+    }
+    
+    // Enhanced terrain generators with new biome support
+    generatePolarTerrain(biomeData, detailNoise, microNoise) {
+        if (biomeData.elevation > 0.8) {
+            return 'glacial_peak';
+        } else if (detailNoise > 0.3) {
+            return 'ice_shelf';
+        } else if (microNoise > 0.2) {
+            return 'ice_field';
+        }
+        return 'polar_ice';
+    }
+    
+    generateArcticDesertTerrain(biomeData, detailNoise, microNoise) {
+        if (biomeData.elevation > 0.6) {
+            return 'frozen_scree';
+        } else if (detailNoise > 0.4) {
+            return 'permafrost';
+        } else if (microNoise > 0.3) {
+            return 'arctic_gravel';
+        }
+        return 'frozen_ground';
+    }
+    
+    generateAlpineTundraTerrain(biomeData, detailNoise, microNoise) {
+        if (biomeData.elevation > 0.9) {
+            return 'alpine_peak';
+        } else if (detailNoise > 0.4) {
+            return 'alpine_meadow';
+        } else if (microNoise > 0.2) {
+            return 'alpine_scrub';
+        }
+        return 'mountain_tundra';
+    }
+    
+    generateTaigaTerrain(biomeData, detailNoise, microNoise) {
+        if (biomeData.moisture > 0.7 && detailNoise < -0.2) {
+            return 'taiga_bog';
+        } else if (biomeData.elevation > 0.5) {
+            return 'mountain_taiga';
+        } else if (microNoise > 0.3) {
+            return 'dense_taiga';
+        } else if (detailNoise > 0.2) {
+            return 'taiga_clearing';
+        }
+        return 'taiga_forest';
+    }
+    
+    generateColdSteppeTerrain(biomeData, detailNoise, microNoise) {
+        if (biomeData.elevation > 0.6) {
+            return 'steppe_hills';
+        } else if (detailNoise > 0.4) {
+            return 'cold_grassland';
+        } else if (microNoise > 0.3) {
+            return 'shrub_steppe';
+        }
+        return 'cold_steppe';
+    }
+    
+    generateTemperateRainforestTerrain(biomeData, detailNoise, microNoise) {
+        if (biomeData.elevation < 0.2) {
+            return 'rainforest_floor';
+        } else if (detailNoise > 0.4) {
+            return 'dense_rainforest';
+        } else if (microNoise > 0.3) {
+            return 'temperate_rainforest';
+        } else if (biomeData.moisture > 0.8) {
+            return 'moss_forest';
+        }
+        return 'humid_forest';
+    }
+    
+    generateDeciduousForestTerrain(biomeData, detailNoise, microNoise) {
+        if (biomeData.elevation > 0.6) {
+            return 'hill_forest';
+        } else if (biomeData.seasonality > 0.6) {
+            return 'seasonal_forest';
+        } else if (detailNoise > 0.3) {
+            return 'dense_deciduous';
+        } else if (microNoise > 0.2) {
+            return 'mixed_deciduous';
+        }
+        return 'deciduous_forest';
+    }
+    
+    generateTemperateGrasslandTerrain(biomeData, detailNoise, microNoise) {
+        if (biomeData.moisture > 0.6) {
+            return 'tall_grassland';
+        } else if (detailNoise > 0.4) {
+            return 'prairie';
+        } else if (microNoise > 0.3) {
+            return 'mixed_grassland';
+        }
+        return 'short_grassland';
+    }
+    
+    generateIslandTerrain(biomeData, detailNoise, microNoise) {
+        if (biomeData.elevation < 0.1) {
+            return 'lagoon';
+        } else if (biomeData.elevation < 0.3) {
+            return 'island_beach';
+        } else if (biomeData.elevation > 0.7) {
+            return 'island_peak';
+        } else if (biomeData.moisture > 0.6) {
+            return 'island_forest';
+        }
+        return 'island_interior';
+    }
+    
+    generateTropicalCoastTerrain(biomeData, detailNoise, microNoise) {
+        if (biomeData.elevation < 0.1) {
+            return 'coral_reef';
+        } else if (biomeData.elevation < 0.2) {
+            return 'tropical_beach';
+        } else if (detailNoise > 0.3) {
+            return 'mangrove_swamp';
+        } else if (microNoise > 0.4) {
+            return 'coastal_palm_forest';
+        }
+        return 'tropical_coast';
+    }
+    
+    generateTropicalRainforestTerrain(biomeData, detailNoise, microNoise) {
+        if (biomeData.elevation < 0.2 && biomeData.moisture > 0.8) {
+            return 'jungle_swamp';
+        } else if (detailNoise > 0.5) {
+            return 'dense_jungle';
+        } else if (microNoise > 0.3) {
+            return 'tropical_canopy';
+        } else if (biomeData.elevation > 0.6) {
+            return 'mountain_rainforest';
+        }
+        return 'tropical_rainforest';
+    }
+    
+    generateSubtropicalForestTerrain(biomeData, detailNoise, microNoise) {
+        if (biomeData.moisture > 0.7) {
+            return 'humid_subtropical';
+        } else if (detailNoise > 0.4) {
+            return 'subtropical_woodland';
+        } else if (microNoise > 0.3) {
+            return 'mixed_subtropical';
+        }
+        return 'subtropical_forest';
+    }
+    
+    generateSavannaTerrain(biomeData, detailNoise, microNoise) {
+        if (biomeData.elevation > 0.5) {
+            return 'savanna_hills';
+        } else if (detailNoise > 0.4) {
+            return 'tree_savanna';
+        } else if (microNoise > 0.3) {
+            return 'grassland_savanna';
+        } else if (biomeData.moisture < 0.3) {
+            return 'dry_savanna';
+        }
+        return 'savanna';
+    }
+    
+    generateDesertTerrain(biomeData, detailNoise, microNoise) {
+        if (biomeData.elevation > 0.7) {
+            return 'desert_mountains';
+        } else if (detailNoise > 0.5) {
+            return 'sand_dunes';
+        } else if (detailNoise < -0.4) {
+            return 'desert_oasis';
+        } else if (microNoise > 0.4) {
+            return 'rocky_desert';
+        } else if (microNoise > 0.2) {
+            return 'scrub_desert';
+        }
+        return 'sand_desert';
     }
     
     generateArcticTerrain(biomeData, detailNoise, microNoise) {
@@ -920,26 +1379,8 @@ class MobileVikingSettlementTycoon {
     }
     
     seededNoise(x, y) {
-        // Seeded multi-octave noise for consistent infinite generation
-        let value = 0;
-        let amplitude = 1;
-        let frequency = 1;
-        
-        for (let i = 0; i < 3; i++) { // Reduced octaves for mobile performance
-            const px = x * frequency;
-            const py = y * frequency;
-            
-            // Simple seeded noise function
-            const n = Math.sin(px * 2.3 + py * 1.7 + this.seed) * 
-                     Math.cos(px * 1.9 + py * 2.1 + this.seed) * 
-                     Math.sin(px * 3.1 + py * 2.9 + this.seed * 2);
-            
-            value += n * amplitude;
-            amplitude *= 0.5;
-            frequency *= 2;
-        }
-        
-        return Math.max(-1, Math.min(1, value * 0.5));
+        // Enhanced seeded multi-octave noise for consistent infinite generation
+        return this.multiOctaveNoise(x + this.seed, y + this.seed, 3, 0.5, 2.0);
     }
     
     renderChunkTextures(chunk) {
