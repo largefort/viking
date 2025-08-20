@@ -672,13 +672,20 @@ class MobileVikingSettlementTycoon {
     }
     
     isValidPlacement(x, y) {
-        // Simplified validation for mobile
+        // Check terrain (avoid water)
+        const tileType = this.getTileAt(x, y);
+        if (tileType.includes('water') || tileType.includes('deep_') || tileType.includes('ocean')) {
+            return false;
+        }
+        
+        // Check for overlapping buildings
         for (const building of this.buildings) {
             const distance = Math.sqrt((building.x - x) ** 2 + (building.y - y) ** 2);
             if (distance < building.size) {
                 return false;
             }
         }
+        
         return true;
     }
     
@@ -1392,7 +1399,6 @@ class MobileVikingSettlementTycoon {
             case 'shallow_water':
             case 'coral_reef':
                 this.drawShallowWaterTile(ctx, x, y, size, noise, detailNoise);
-                break;
                 
             // Desert biomes
             case 'desert_plain':
@@ -1743,7 +1749,7 @@ class MobileVikingSettlementTycoon {
                 const flowerX = x + size * (0.2 + i * 0.2);
                 const flowerY = y + size * (0.3 + Math.sin(detailNoise + i) * 0.3);
                 ctx.beginPath();
-                ctx.arc(flowerX, flowerY, 2, 0, Math.PI * 2);
+                ctx.arc(flowerX, flowerY, 1.5, 0, Math.PI * 2);
                 ctx.fill();
             }
         }
@@ -2124,8 +2130,8 @@ class MobileVikingSettlementTycoon {
         const grassColors = ['#8fbc8f', '#9acd32', '#556b2f'];
         
         for (let i = 0; i < grassDensity; i++) {
-            const grassX = x + (Math.sin(x * 0.05 + i) + 1) * size/2;
-            const grassY = y + (Math.cos(y * 0.05 + i) + 1) * size/2;
+            const grassX = x + (Math.sin(x * 0.1 + i) + 1) * size/2;
+            const grassY = y + (Math.cos(y * 0.1 + i) + 1) * size/2;
             const grassColor = grassColors[i % grassColors.length];
             
             ctx.fillStyle = grassColor;
@@ -2147,11 +2153,11 @@ class MobileVikingSettlementTycoon {
     
     drawSparseForestTile(ctx, x, y, size, detailNoise, noise) {
         // Forest floor with organic texture
-        const floorGradient = ctx.createRadialGradient(x + size/2, y + size/2, 0, x + size/2, y + size/2, size);
-        floorGradient.addColorStop(0, '#9acd32');
-        floorGradient.addColorStop(0.6, '#8fbc8f');
-        floorGradient.addColorStop(1, '#6b8e23');
-        ctx.fillStyle = floorGradient;
+        const forestFloorGradient = ctx.createRadialGradient(x + size/2, y + size/2, 0, x + size/2, y + size/2, size);
+        forestFloorGradient.addColorStop(0, '#9acd32');
+        forestFloorGradient.addColorStop(0.6, '#8fbc8f');
+        forestFloorGradient.addColorStop(1, '#6b8e23');
+        ctx.fillStyle = forestFloorGradient;
         ctx.fillRect(x, y, size, size);
         
         // Sparse vegetation texture
@@ -2287,31 +2293,33 @@ class MobileVikingSettlementTycoon {
         
         // Very dense conifer arrangement
         const trees = [
-            { x: 0.2, y: 0.3 }, { x: 0.7, y: 0.2 }, { x: 0.4, y: 0.6 },
+            { x: 0.25, y: 0.3 }, { x: 0.75, y: 0.2 }, { x: 0.4, y: 0.6 },
             { x: 0.8, y: 0.7 }, { x: 0.1, y: 0.8 }, { x: 0.6, y: 0.9 }
         ];
         
         trees.forEach((tree, i) => {
-            const treeX = x + tree.x * size;
-            const treeY = y + tree.y * size;
-            const treeVariation = Math.sin(noise + i) * 0.3;
-            
-            // Trunk with bark texture
-            ctx.fillStyle = '#654321';
-            ctx.fillRect(treeX - 1, treeY, 2, 4 + Math.abs(treeVariation) * 2);
-            
-            // Multi-layer conifer canopy
-            const layers = ['#1a5f1a', '#228b22', '#32cd32'];
-            layers.forEach((color, layerIndex) => {
-                ctx.fillStyle = color;
-                const layerSize = 3 + layerIndex;
-                ctx.fillRect(
-                    treeX - layerSize + treeVariation,
-                    treeY - 3 - layerIndex * 2,
-                    layerSize * 2,
-                    layerSize
-                );
-            });
+            if (i < 3 + Math.abs(detailNoise) * 2) {
+                const treeX = x + tree.x * size;
+                const treeY = y + tree.y * size;
+                const treeVariation = Math.sin(noise + i) * 0.3;
+                
+                // Trunk with bark texture
+                ctx.fillStyle = '#654321';
+                ctx.fillRect(treeX - 1, treeY, 2, 4 + Math.abs(treeVariation) * 2);
+                
+                // Multi-layer conifer canopy
+                const layers = ['#1a5f1a', '#228b22', '#32cd32'];
+                layers.forEach((color, layerIndex) => {
+                    ctx.fillStyle = color;
+                    const layerSize = 3 + layerIndex;
+                    ctx.fillRect(
+                        treeX - layerSize + treeVariation,
+                        treeY - 3 - layerIndex * 2,
+                        layerSize * 2,
+                        layerSize
+                    );
+                });
+            }
         });
         
         // Forest lighting effects
@@ -2411,7 +2419,7 @@ class MobileVikingSettlementTycoon {
             if (Math.abs(detailNoise + i * 0.2) > 0.1) {
                 const rockX = x + rock.x * size;
                 const rockY = y + rock.y * size;
-                const rockSize = rock.size * size + Math.abs(noise + i) * 3;
+                const rockSize = 2 + Math.abs(noise + i) * 2;
                 
                 // Rock shadow
                 ctx.fillStyle = 'rgba(0,0,0,0.4)';
@@ -3321,12 +3329,12 @@ class MobileVikingSettlementTycoon {
         
         // Render base terrain
         chunk.tiles.forEach(tile => {
-            this.drawEnhancedTerrainTile(ctx, tile.type, tile.localX, tile.localY, this.tileSize, tile.noise, tile.detailNoise, tile.moisture);
+            this.drawEnhancedTerrainTile(ctx, tile.type, tile.localX, tile.localY, this.tileSize, tile.noise || 0, tile.detailNoise || 0, tile.moisture || 0.5);
         });
         
         // Add detail overlay
         chunk.tiles.forEach(tile => {
-            this.drawTerrainDetails(detailCtx, tile.type, tile.localX, tile.localY, this.tileSize, tile.detailNoise);
+            this.drawTerrainDetails(detailCtx, tile.type, tile.localX, tile.localY, this.tileSize, tile.detailNoise || 0);
         });
     }
     
@@ -3484,8 +3492,7 @@ class MobileVikingSettlementTycoon {
                 const localY = tileY - chunk.worldY;
                 
                 // Ensure coordinates are within chunk bounds
-                if (localX >= -this.tileSize && localX < this.chunkSize + this.tileSize && 
-                    localY >= -this.tileSize && localY < this.chunkSize + this.tileSize) {
+                if (isFinite(localX) && isFinite(localY) && isFinite(this.tileSize)) {
                     
                     ctx.save();
                     ctx.globalCompositeOperation = 'destination-out';
