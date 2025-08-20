@@ -1148,10 +1148,303 @@ class MobileVikingSettlementTycoon {
                 return this.generateTemperateTerrain(biomeData, detailNoise, microNoise);
         }
     }
-    
+
+    // Add missing terrain generation methods
+    generatePolarTerrain(biomeData, detailNoise, microNoise) {
+        if (biomeData.elevation > 0.9) {
+            return 'glacial_peak';
+        } else if (biomeData.elevation < 0.1) {
+            return 'ice_shelf';
+        } else if (detailNoise < -0.3) {
+            return 'polar_ice';
+        } else {
+            return 'ice_field';
+        }
+    }
+
+    generateArcticTerrain(biomeData, detailNoise, microNoise) {
+        if (biomeData.elevation < 0.2) {
+            return detailNoise < -0.3 ? 'arctic_ice' : 'snow';
+        } else if (biomeData.elevation < 0.4 && detailNoise > 0.2) {
+            return 'tundra_grass';
+        } else if (microNoise > 0.4 && biomeData.moisture > 0.3) {
+            return 'sparse_forest';
+        }
+        return 'snow';
+    }
+
+    generateArcticDesertTerrain(biomeData, detailNoise, microNoise) {
+        if (biomeData.elevation > 0.7) {
+            return 'frozen_scree';
+        } else if (detailNoise < -0.4) {
+            return 'permafrost';
+        } else if (microNoise > 0.3) {
+            return 'arctic_gravel';
+        } else {
+            return 'frozen_ground';
+        }
+    }
+
+    generateAlpineTundraTerrain(biomeData, detailNoise, microNoise) {
+        if (biomeData.elevation > 0.8) {
+            return 'alpine_peak';
+        } else if (detailNoise > 0.3) {
+            return 'alpine_scrub';
+        } else {
+            return 'mountain_tundra';
+        }
+    }
+
+    generateBorealTerrain(biomeData, detailNoise, microNoise) {
+        if (biomeData.elevation < 0.15 && biomeData.moisture > 0.6) {
+            return detailNoise < -0.2 ? 'boreal_lake' : 'wetland';
+        } else if (biomeData.moisture > 0.4) {
+            return detailNoise > 0.2 ? 'dense_conifer_forest' : 'conifer_forest';
+        } else if (biomeData.elevation > 0.6) {
+            return 'rocky_terrain';
+        }
+        return microNoise > 0 ? 'conifer_forest' : 'boreal_clearing';
+    }
+
+    generateTaigaTerrain(biomeData, detailNoise, microNoise) {
+        if (biomeData.elevation < 0.2 && biomeData.moisture > 0.7) {
+            return 'taiga_bog';
+        } else if (biomeData.elevation > 0.6) {
+            return 'mountain_taiga';
+        } else if (biomeData.moisture > 0.5) {
+            return detailNoise > 0.3 ? 'dense_taiga' : 'taiga_forest';
+        } else {
+            return 'taiga_clearing';
+        }
+    }
+
+    generateColdSteppeTerrain(biomeData, detailNoise, microNoise) {
+        if (biomeData.elevation > 0.5) {
+            return 'steppe_hills';
+        } else if (microNoise > 0.3) {
+            return 'shrub_steppe';
+        } else if (biomeData.moisture > 0.3) {
+            return 'cold_grassland';
+        } else {
+            return 'cold_steppe';
+        }
+    }
+
+    generateCoastalTerrain(biomeData, detailNoise, microNoise) {
+        if (biomeData.elevation < 0.1) {
+            return 'deep_fjord_water';
+        } else if (biomeData.elevation < 0.25) {
+            return detailNoise < 0 ? 'shallow_water' : 'rocky_shore';
+        } else if (biomeData.elevation < 0.4 && biomeData.moisture > 0.5) {
+            return microNoise > 0.2 ? 'coastal_forest' : 'beach';
+        } else if (biomeData.elevation > 0.7) {
+            return 'sea_cliff';
+        }
+        return detailNoise > 0.1 ? 'coastal_grass' : 'beach';
+    }
+
+    generateTemperateRainforestTerrain(biomeData, detailNoise, microNoise) {
+        if (biomeData.elevation < 0.2 && biomeData.moisture > 0.8) {
+            return 'temperate_wetland';
+        } else if (biomeData.moisture > 0.7) {
+            return detailNoise > 0.3 ? 'dense_temperate_forest' : 'temperate_rainforest';
+        } else if (microNoise > 0.4) {
+            return 'moss_forest';
+        } else {
+            return 'fern_understory';
+        }
+    }
+
+    generateDeciduousForestTerrain(biomeData, detailNoise, microNoise) {
+        if (biomeData.elevation < 0.2 && biomeData.moisture > 0.6) {
+            return 'forest_stream';
+        } else if (biomeData.moisture > 0.5) {
+            return detailNoise > 0.2 ? 'dense_deciduous' : 'deciduous_forest';
+        } else if (microNoise > 0.3) {
+            return 'oak_forest';
+        } else {
+            return 'mixed_woodland';
+        }
+    }
+
+    generateMountainTerrain(biomeData, detailNoise, microNoise) {
+        if (biomeData.elevation > 0.9) {
+            return biomeData.temperature < 0.3 ? 'snow_peak' : 'rocky_peak';
+        } else if (biomeData.elevation > 0.7) {
+            return detailNoise > 0.3 ? 'alpine_forest' : 'rocky_slope';
+        } else if (biomeData.elevation > 0.5) {
+            return microNoise > 0.2 ? 'mountain_forest' : 'alpine_meadow';
+        } else if (biomeData.moisture > 0.6) {
+            return 'mountain_stream';
+        }
+        return 'hills';
+    }
+
+    generateTemperateGrasslandTerrain(biomeData, detailNoise, microNoise) {
+        if (biomeData.elevation < 0.15 && biomeData.moisture > 0.6) {
+            return 'grassland_pond';
+        } else if (biomeData.moisture > 0.4) {
+            return detailNoise > 0.3 ? 'tall_grass_prairie' : 'temperate_grassland';
+        } else if (microNoise > 0.4) {
+            return 'wildflower_meadow';
+        } else {
+            return 'short_grass_prairie';
+        }
+    }
+
+    generateIslandTerrain(biomeData, detailNoise, microNoise) {
+        if (biomeData.elevation < 0.1) {
+            return biomeData.temperature > 0.6 ? 'tropical_lagoon' : 'island_waters';
+        } else if (biomeData.elevation < 0.3) {
+            return detailNoise > 0 ? 'island_beach' : 'coral_reef';
+        } else if (biomeData.moisture > 0.6) {
+            return biomeData.temperature > 0.6 ? 'palm_forest' : 'island_forest';
+        } else {
+            return 'island_plateau';
+        }
+    }
+
+    generateTropicalCoastTerrain(biomeData, detailNoise, microNoise) {
+        if (biomeData.elevation < 0.1) {
+            return 'tropical_waters';
+        } else if (biomeData.elevation < 0.2) {
+            return detailNoise > 0 ? 'white_sand_beach' : 'mangrove_swamp';
+        } else if (biomeData.moisture > 0.7) {
+            return 'coastal_rainforest';
+        } else {
+            return 'tropical_coastal_plain';
+        }
+    }
+
+    generateTropicalRainforestTerrain(biomeData, detailNoise, microNoise) {
+        if (biomeData.elevation < 0.15 && biomeData.moisture > 0.8) {
+            return 'jungle_swamp';
+        } else if (biomeData.moisture > 0.8) {
+            return detailNoise > 0.4 ? 'dense_jungle' : 'tropical_rainforest';
+        } else if (microNoise > 0.5) {
+            return 'jungle_canopy';
+        } else {
+            return 'jungle_floor';
+        }
+    }
+
+    generateSubtropicalForestTerrain(biomeData, detailNoise, microNoise) {
+        if (biomeData.elevation < 0.2 && biomeData.moisture > 0.7) {
+            return 'subtropical_wetland';
+        } else if (biomeData.moisture > 0.6) {
+            return detailNoise > 0.3 ? 'dense_subtropical' : 'subtropical_forest';
+        } else if (microNoise > 0.4) {
+            return 'bamboo_grove';
+        } else {
+            return 'subtropical_woodland';
+        }
+    }
+
+    generateSavannaTerrain(biomeData, detailNoise, microNoise) {
+        if (biomeData.elevation < 0.15 && biomeData.moisture > 0.5) {
+            return 'savanna_waterhole';
+        } else if (detailNoise > 0.4 && biomeData.moisture > 0.3) {
+            return 'acacia_savanna';
+        } else if (microNoise > 0.5) {
+            return 'baobab_savanna';
+        } else {
+            return 'grassland_savanna';
+        }
+    }
+
+    generateDesertTerrain(biomeData, detailNoise, microNoise) {
+        if (biomeData.elevation > 0.7) {
+            return 'desert_mountains';
+        } else if (biomeData.elevation < 0.2 && biomeData.moisture > 0.2) {
+            return 'oasis';
+        } else if (detailNoise > 0.4) {
+            return 'rocky_desert';
+        } else if (microNoise > 0.3) {
+            return 'sand_dunes';
+        } else {
+            return 'desert_plain';
+        }
+    }
+
+    generateTemperateTerrain(biomeData, detailNoise, microNoise) {
+        if (biomeData.elevation < 0.15 && biomeData.moisture > 0.7) {
+            return detailNoise < -0.2 ? 'river' : 'wetland';
+        } else if (biomeData.moisture > 0.5 && detailNoise > 0.1) {
+            return microNoise > 0.3 ? 'deciduous_forest' : 'mixed_forest';
+        } else if (biomeData.moisture < 0.3 && detailNoise < -0.2) {
+            return 'dry_grassland';
+        } else if (microNoise > 0.4) {
+            return 'flowering_meadow';
+        }
+        return 'grass';
+    }
+
     // Enhanced terrain generators with improved textures
     drawEnhancedTerrainTile(ctx, tileType, x, y, size, noise, detailNoise, moisture) {
         switch(tileType) {
+            // Ocean and water biomes
+            case 'deep_fjord_water':
+            case 'tropical_waters':
+            case 'island_waters':
+            case 'tropical_lagoon':
+                this.drawOceanTile(ctx, x, y, size, tileType, noise, detailNoise);
+                break;
+            case 'shallow_water':
+            case 'coral_reef':
+                this.drawShallowWaterTile(ctx, x, y, size, noise, detailNoise);
+                break;
+                
+            // Desert biomes
+            case 'desert_plain':
+            case 'sand_dunes':
+            case 'rocky_desert':
+            case 'desert_mountains':
+            case 'oasis':
+                this.drawDesertTile(ctx, x, y, size, tileType, noise, detailNoise, moisture);
+                break;
+                
+            // Forest biomes
+            case 'tropical_rainforest':
+            case 'dense_jungle':
+            case 'jungle_canopy':
+            case 'jungle_floor':
+            case 'jungle_swamp':
+                this.drawTropicalForestTile(ctx, x, y, size, tileType, noise, detailNoise, moisture);
+                break;
+            case 'deciduous_forest':
+            case 'dense_deciduous':
+            case 'oak_forest':
+            case 'mixed_woodland':
+            case 'forest_stream':
+                this.drawDeciduousForestTile(ctx, x, y, size, detailNoise, moisture);
+                break;
+            case 'conifer_forest':
+            case 'dense_conifer_forest':
+            case 'boreal_clearing':
+            case 'taiga_forest':
+            case 'dense_taiga':
+                this.drawConiferForestTile(ctx, x, y, size, detailNoise, noise);
+                break;
+                
+            // Snow biomes
+            case 'snow':
+            case 'polar_ice':
+            case 'ice_field':
+            case 'glacial_peak':
+            case 'ice_shelf':
+            case 'snow_peak':
+                this.drawSnowTile(ctx, x, y, size, tileType, noise, detailNoise);
+                break;
+                
+            // Grassland and savanna biomes
+            case 'savanna':
+            case 'grassland_savanna':
+            case 'acacia_savanna':
+            case 'baobab_savanna':
+            case 'savanna_waterhole':
+                this.drawSavannaTile(ctx, x, y, size, tileType, noise, detailNoise, moisture);
+                break;
+                
             // Arctic biome tiles
             case 'arctic_ice':
                 this.drawArcticIceTile(ctx, x, y, size, noise, detailNoise);
@@ -1170,23 +1463,11 @@ class MobileVikingSettlementTycoon {
             case 'wetland':
                 this.drawWetlandTile(ctx, x, y, size, moisture, detailNoise);
                 break;
-            case 'dense_conifer_forest':
-                this.drawDenseConiferTile(ctx, x, y, size, detailNoise, noise);
-                break;
-            case 'conifer_forest':
-                this.drawConiferForestTile(ctx, x, y, size, detailNoise, noise);
-                break;
-            case 'boreal_clearing':
-                this.drawBorealClearingTile(ctx, x, y, size, detailNoise, moisture);
-                break;
             case 'rocky_terrain':
                 this.drawRockyTerrainTile(ctx, x, y, size, detailNoise, noise);
                 break;
                 
             // Coastal biome tiles
-            case 'deep_fjord_water':
-                this.drawDeepFjordTile(ctx, x, y, size, noise);
-                break;
             case 'rocky_shore':
                 this.drawRockyShoreTile(ctx, x, y, size, detailNoise, noise);
                 break;
@@ -1199,11 +1480,13 @@ class MobileVikingSettlementTycoon {
             case 'coastal_grass':
                 this.drawCoastalGrassTile(ctx, x, y, size, moisture, detailNoise);
                 break;
+            case 'beach':
+            case 'island_beach':
+            case 'white_sand_beach':
+                this.drawBeachTile(ctx, x, y, size, tileType, noise, detailNoise, moisture);
+                break;
                 
             // Mountain biome tiles
-            case 'snow_peak':
-                this.drawSnowPeakTile(ctx, x, y, size, detailNoise, noise);
-                break;
             case 'rocky_peak':
                 this.drawRockyPeakTile(ctx, x, y, size, detailNoise, noise);
                 break;
@@ -1227,9 +1510,6 @@ class MobileVikingSettlementTycoon {
             case 'river':
                 this.drawRiverTile(ctx, x, y, size, noise);
                 break;
-            case 'deciduous_forest':
-                this.drawDeciduousForestTile(ctx, x, y, size, detailNoise, moisture);
-                break;
             case 'mixed_forest':
                 this.drawMixedForestTile(ctx, x, y, size, detailNoise, noise);
                 break;
@@ -1241,13 +1521,6 @@ class MobileVikingSettlementTycoon {
                 break;
                 
             // Enhanced new biome tiles
-            case 'polar_ice':
-            case 'glacial_peak':
-            case 'ice_shelf':
-            case 'ice_field':
-                this.drawPolarTerrain(ctx, x, y, size, tileType, noise, detailNoise);
-                break;
-                
             case 'frozen_ground':
             case 'frozen_scree':
             case 'permafrost':
@@ -1261,10 +1534,8 @@ class MobileVikingSettlementTycoon {
                 this.drawAlpineTundraTerrain(ctx, x, y, size, tileType, noise, detailNoise);
                 break;
                 
-            case 'taiga_forest':
             case 'taiga_bog':
             case 'mountain_taiga':
-            case 'dense_taiga':
             case 'taiga_clearing':
                 this.drawTaigaTerrain(ctx, x, y, size, tileType, noise, detailNoise, moisture);
                 break;
@@ -1280,15 +1551,527 @@ class MobileVikingSettlementTycoon {
             case 'grass':
                 this.drawEnhancedGrassTile(ctx, x, y, size, detailNoise, moisture || 0.5, noise);
                 break;
-            case 'snow':
-                this.drawEnhancedSnowTile(ctx, x, y, size, detailNoise, noise);
-                break;
             case 'hills':
                 this.drawEnhancedHillsTile(ctx, x, y, size, detailNoise, noise);
                 break;
+            default:
+                // Default grass tile for any unhandled terrain types
+                this.drawEnhancedGrassTile(ctx, x, y, size, detailNoise, moisture || 0.5, noise);
+                break;
         }
     }
-    
+
+    // Add new terrain tile renderers
+    drawOceanTile(ctx, x, y, size, tileType, noise, detailNoise) {
+        let deepColor, midColor, lightColor;
+        
+        switch(tileType) {
+            case 'tropical_waters':
+            case 'tropical_lagoon':
+                deepColor = '#0066cc';
+                midColor = '#0080ff';
+                lightColor = '#33aaff';
+                break;
+            case 'deep_fjord_water':
+                deepColor = '#001133';
+                midColor = '#003366';
+                lightColor = '#0066cc';
+                break;
+            default:
+                deepColor = '#0d47a1';
+                midColor = '#1565c0';
+                lightColor = '#1976d2';
+        }
+        
+        const gradient = ctx.createRadialGradient(x + size/2, y + size/2, 0, x + size/2, y + size/2, size);
+        gradient.addColorStop(0, lightColor);
+        gradient.addColorStop(0.5, midColor);
+        gradient.addColorStop(1, deepColor);
+        ctx.fillStyle = gradient;
+        ctx.fillRect(x, y, size, size);
+        
+        // Water effects
+        ctx.globalAlpha = 0.3;
+        ctx.fillStyle = lightColor;
+        const waveTime = Date.now() * 0.001;
+        for (let i = 0; i < 3; i++) {
+            const waveX = x + Math.sin(waveTime + noise + i) * size/4 + size/2;
+            const waveY = y + Math.cos(waveTime + noise + i) * size/4 + size/2;
+            ctx.fillRect(waveX, waveY, 2, 1);
+        }
+        ctx.globalAlpha = 1;
+    }
+
+    drawShallowWaterTile(ctx, x, y, size, noise, detailNoise) {
+        // Shallow water base
+        ctx.fillStyle = '#4fc3f7';
+        ctx.fillRect(x, y, size, size);
+        
+        // Water depth variation
+        ctx.globalAlpha = 0.5;
+        ctx.fillStyle = '#29b6f6';
+        for (let i = 0; i < 6; i++) {
+            const rippleX = x + (Math.sin(x * 0.1 + i) + 1) * size/2;
+            const rippleY = y + (Math.cos(y * 0.1 + i) + 1) * size/2;
+            ctx.beginPath();
+            ctx.arc(rippleX, rippleY, 2 + Math.abs(detailNoise), 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Sand bottom visible through water
+        if (Math.abs(detailNoise) > 0.2) {
+            ctx.fillStyle = '#ffd54f';
+            ctx.globalAlpha = 0.3;
+            ctx.fillRect(x + size/4, y + size/4, size/2, size/2);
+        }
+        ctx.globalAlpha = 1;
+    }
+
+    drawDesertTile(ctx, x, y, size, tileType, noise, detailNoise, moisture) {
+        let baseColor, accentColor;
+        
+        switch(tileType) {
+            case 'sand_dunes':
+                baseColor = '#f4e4bc';
+                accentColor = '#e6d7a3';
+                break;
+            case 'rocky_desert':
+                baseColor = '#d4b896';
+                accentColor = '#8d6e63';
+                break;
+            case 'desert_mountains':
+                baseColor = '#a67c52';
+                accentColor = '#6d4c41';
+                break;
+            case 'oasis':
+                baseColor = '#c8e6c9';
+                accentColor = '#4caf50';
+                break;
+            default:
+                baseColor = '#deb887';
+                accentColor = '#cd853f';
+        }
+        
+        ctx.fillStyle = baseColor;
+        ctx.fillRect(x, y, size, size);
+        
+        if (tileType === 'sand_dunes') {
+            // Sand dune patterns
+            ctx.fillStyle = accentColor;
+            ctx.globalAlpha = 0.6;
+            for (let i = 0; i < 4; i++) {
+                const duneY = y + i * size/4 + Math.sin(noise + i) * size/8;
+                ctx.fillRect(x, duneY, size, size/6);
+            }
+            ctx.globalAlpha = 1;
+        } else if (tileType === 'rocky_desert') {
+            // Desert rocks
+            ctx.fillStyle = '#8d6e63';
+            for (let i = 0; i < 6; i++) {
+                const rockX = x + (Math.sin(x * 0.1 + i) + 1) * size/2;
+                const rockY = y + (Math.cos(y * 0.1 + i) + 1) * size/2;
+                const rockSize = 2 + Math.abs(detailNoise + i * 0.2) * 2;
+                ctx.fillRect(rockX, rockY, rockSize, rockSize);
+            }
+        } else if (tileType === 'oasis') {
+            // Palm trees
+            ctx.fillStyle = '#8bc34a';
+            for (let i = 0; i < 3; i++) {
+                const palmX = x + size/4 + i * size/4;
+                const palmY = y + size/2 + Math.sin(i) * size/6;
+                ctx.fillRect(palmX - 1, palmY, 2, size/4);
+                
+                // Palm fronds
+                ctx.fillStyle = '#4caf50';
+                ctx.fillRect(palmX - 3, palmY - size/4, 6, 3);
+            }
+            
+            // Water
+            ctx.fillStyle = '#2196f3';
+            ctx.globalAlpha = 0.7;
+            ctx.beginPath();
+            ctx.arc(x + size/2, y + size * 0.7, size/4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+        }
+    }
+
+    drawTropicalForestTile(ctx, x, y, size, tileType, noise, detailNoise, moisture) {
+        let floorColor, canopyColor, accentColor;
+        
+        switch(tileType) {
+            case 'dense_jungle':
+                floorColor = '#1b5e20';
+                canopyColor = '#2e7d32';
+                accentColor = '#4caf50';
+                break;
+            case 'jungle_canopy':
+                floorColor = '#2e7d32';
+                canopyColor = '#4caf50';
+                accentColor = '#66bb6a';
+                break;
+            case 'jungle_swamp':
+                floorColor = '#3e2723';
+                canopyColor = '#4caf50';
+                accentColor = '#2196f3';
+                break;
+            default:
+                floorColor = '#388e3c';
+                canopyColor = '#4caf50';
+                accentColor = '#66bb6a';
+        }
+        
+        // Forest floor
+        ctx.fillStyle = floorColor;
+        ctx.fillRect(x, y, size, size);
+        
+        // Dense vegetation
+        ctx.globalAlpha = 0.8;
+        for (let i = 0; i < 12; i++) {
+            ctx.fillStyle = i % 2 === 0 ? canopyColor : accentColor;
+            const vegX = x + (Math.sin(x * 0.15 + i) + 1) * size/2;
+            const vegY = y + (Math.cos(y * 0.15 + i) + 1) * size/2;
+            const vegSize = 2 + Math.abs(detailNoise + i * 0.1) * 3;
+            ctx.fillRect(vegX, vegY, vegSize, vegSize);
+        }
+        
+        // Tropical flowers
+        if (tileType !== 'jungle_swamp' && Math.abs(detailNoise) > 0.3) {
+            const flowerColors = ['#ff5722', '#e91e63', '#9c27b0', '#ff9800'];
+            for (let i = 0; i < 4; i++) {
+                ctx.fillStyle = flowerColors[i];
+                const flowerX = x + size * (0.2 + i * 0.2);
+                const flowerY = y + size * (0.3 + Math.sin(detailNoise + i) * 0.3);
+                ctx.beginPath();
+                ctx.arc(flowerX, flowerY, 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        // Swamp water
+        if (tileType === 'jungle_swamp') {
+            ctx.fillStyle = '#2196f3';
+            ctx.globalAlpha = 0.5;
+            for (let i = 0; i < 3; i++) {
+                const waterX = x + size * (0.2 + i * 0.3);
+                const waterY = y + size * (0.4 + Math.sin(i) * 0.2);
+                ctx.beginPath();
+                ctx.arc(waterX, waterY, 3 + i, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        ctx.globalAlpha = 1;
+    }
+
+    drawBeachTile(ctx, x, y, size, tileType, noise, detailNoise, moisture) {
+        let sandColor, accentColor;
+        
+        switch(tileType) {
+            case 'white_sand_beach':
+                sandColor = '#ffffff';
+                accentColor = '#f5f5f5';
+                break;
+            case 'island_beach':
+                sandColor = '#fff9c4';
+                accentColor = '#f0e68c';
+                break;
+            default:
+                sandColor = '#f5e6a3';
+                accentColor = '#deb887';
+        }
+        
+        const gradient = ctx.createLinearGradient(x, y, x + size, y + size);
+        gradient.addColorStop(0, sandColor);
+        gradient.addColorStop(1, accentColor);
+        ctx.fillStyle = gradient;
+        ctx.fillRect(x, y, size, size);
+        
+        // Sand texture
+        ctx.fillStyle = accentColor;
+        for (let i = 0; i < 20; i++) {
+            const dotX = x + Math.random() * size;
+            const dotY = y + Math.random() * size;
+            ctx.beginPath();
+            ctx.arc(dotX, dotY, 0.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Shells and debris
+        if (Math.random() < 0.3) {
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(x + size * 0.7, y + size * 0.3, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    drawSavannaTile(ctx, x, y, size, tileType, noise, detailNoise, moisture) {
+        let grassColor, treeColor;
+        
+        switch(tileType) {
+            case 'acacia_savanna':
+                grassColor = '#8bc34a';
+                treeColor = '#795548';
+                break;
+            case 'baobab_savanna':
+                grassColor = '#7cb342';
+                treeColor = '#8d6e63';
+                break;
+            case 'savanna_waterhole':
+                grassColor = '#4caf50';
+                treeColor = '#2196f3';
+                break;
+            default:
+                grassColor = '#9ccc65';
+                treeColor = '#6d4c41';
+        }
+        
+        // Savanna grass base
+        ctx.fillStyle = grassColor;
+        ctx.fillRect(x, y, size, size);
+        
+        // Grass texture
+        ctx.globalAlpha = 0.7;
+        ctx.fillStyle = '#689f38';
+        for (let i = 0; i < 15; i++) {
+            const grassX = x + Math.random() * size;
+            const grassY = y + Math.random() * size;
+            ctx.fillRect(grassX, grassY, 1, 2);
+        }
+        ctx.globalAlpha = 1;
+        
+        // Trees based on savanna type
+        if (tileType === 'acacia_savanna') {
+            // Acacia tree
+            ctx.fillStyle = treeColor;
+            ctx.fillRect(x + size * 0.3, y + size * 0.4, 2, size/3);
+            
+            ctx.fillStyle = '#4caf50';
+            ctx.beginPath();
+            ctx.arc(x + size * 0.31, y + size * 0.25, 6, 0, Math.PI * 2);
+            ctx.fill();
+        } else if (tileType === 'baobab_savanna') {
+            // Baobab tree
+            ctx.fillStyle = treeColor;
+            ctx.fillRect(x + size * 0.4, y + size * 0.3, 4, size/2);
+            
+            ctx.fillStyle = '#66bb6a';
+            ctx.fillRect(x + size * 0.38, y + size * 0.15, 8, 6);
+        } else if (tileType === 'savanna_waterhole') {
+            // Water hole
+            ctx.fillStyle = '#2196f3';
+            ctx.globalAlpha = 0.8;
+            ctx.beginPath();
+            ctx.arc(x + size/2, y + size/2, size/3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+        }
+    }
+
+    drawSnowTile(ctx, x, y, size, tileType, noise, detailNoise) {
+        let snowColor, accentColor;
+        
+        switch(tileType) {
+            case 'polar_ice':
+            case 'glacial_peak':
+                snowColor = '#e8f4fd';
+                accentColor = '#ffffff';
+                break;
+            case 'ice_field':
+            case 'ice_shelf':
+                snowColor = '#f0f8ff';
+                accentColor = '#e0f6ff';
+                break;
+            default:
+                snowColor = '#ffffff';
+                accentColor = '#f8f8ff';
+        }
+        
+        const gradient = ctx.createRadialGradient(x + size/2, y + size/2, 0, x + size/2, y + size/2, size);
+        gradient.addColorStop(0, accentColor);
+        gradient.addColorStop(0.8, snowColor);
+        gradient.addColorStop(1, '#e8e8e8');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(x, y, size, size);
+        
+        // Snow texture
+        ctx.fillStyle = accentColor;
+        ctx.globalAlpha = 0.8;
+        for (let i = 0; i < 15; i++) {
+            const crystalX = x + (Math.sin(x * 0.05 + i) + 1) * size/2;
+            const crystalY = y + (Math.cos(y * 0.05 + i) + 1) * size/2;
+            ctx.beginPath();
+            ctx.arc(crystalX, crystalY, 1, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        
+        // Ice formations for glacial types
+        if (tileType === 'glacial_peak' || tileType === 'ice_shelf') {
+            ctx.strokeStyle = '#b0e0e6';
+            ctx.lineWidth = 1;
+            ctx.globalAlpha = 0.6;
+            for (let i = 0; i < 3; i++) {
+                ctx.beginPath();
+                ctx.moveTo(x + i * size/3, y);
+                ctx.lineTo(x + i * size/3 + size/6, y + size);
+                ctx.stroke();
+            }
+            ctx.globalAlpha = 1;
+        }
+    }
+
+    // Add missing terrain type renderers
+    drawTaigaTerrain(ctx, x, y, size, tileType, noise, detailNoise, moisture) {
+        switch(tileType) {
+            case 'taiga_bog':
+                ctx.fillStyle = '#2e8b57';
+                ctx.fillRect(x, y, size, size);
+                
+                // Bog water
+                ctx.fillStyle = '#4682b4';
+                ctx.globalAlpha = 0.6;
+                ctx.fillRect(x + size/4, y + size/4, size/2, size/2);
+                ctx.globalAlpha = 1;
+                
+                // Bog vegetation
+                ctx.fillStyle = '#228b22';
+                for (let i = 0; i < 8; i++) {
+                    const vegX = x + Math.random() * size;
+                    const vegY = y + Math.random() * size;
+                    ctx.fillRect(vegX, vegY, 1, 3);
+                }
+                break;
+                
+            case 'mountain_taiga':
+                ctx.fillStyle = '#1a5a1a';
+                ctx.fillRect(x, y, size, size);
+                
+                // Mountain conifers
+                for (let i = 0; i < 4; i++) {
+                    const treeX = x + (i % 2) * size/2 + Math.random() * size/4;
+                    const treeY = y + Math.floor(i / 2) * size/2 + Math.random() * size/4;
+                    
+                    ctx.fillStyle = '#654321';
+                    ctx.fillRect(treeX - 1, treeY, 2, 6);
+                    
+                    ctx.fillStyle = '#006400';
+                    ctx.fillRect(treeX - 3, treeY - 8, 6, 8);
+                }
+                break;
+                
+            default:
+                // Default taiga
+                ctx.fillStyle = '#2d5016';
+                ctx.fillRect(x, y, size, size);
+                
+                // Taiga trees
+                for (let i = 0; i < 6; i++) {
+                    const treeX = x + (i % 3) * size/3 + Math.random() * size/4;
+                    const treeY = y + Math.floor(i / 3) * size/2 + Math.random() * size/3;
+                    
+                    ctx.fillStyle = '#654321';
+                    ctx.fillRect(treeX - 1, treeY, 2, 8);
+                    
+                    ctx.fillStyle = '#228b22';
+                    ctx.fillRect(treeX - 4, treeY - 10, 8, 10);
+                }
+        }
+    }
+
+    drawColdSteppeTerrain(ctx, x, y, size, tileType, noise, detailNoise) {
+        switch(tileType) {
+            case 'steppe_hills':
+                const hillGradient = ctx.createLinearGradient(x, y, x + size, y + size);
+                hillGradient.addColorStop(0, '#8d6e63');
+                hillGradient.addColorStop(1, '#795548');
+                ctx.fillStyle = hillGradient;
+                ctx.fillRect(x, y, size, size);
+                break;
+                
+            case 'shrub_steppe':
+                ctx.fillStyle = '#9acd32';
+                ctx.fillRect(x, y, size, size);
+                
+                // Shrubs
+                ctx.fillStyle = '#6b8e23';
+                for (let i = 0; i < 5; i++) {
+                    const shrubX = x + Math.random() * size;
+                    const shrubY = y + Math.random() * size;
+                    ctx.fillRect(shrubX, shrubY, 3, 3);
+                }
+                break;
+                
+            case 'cold_grassland':
+                ctx.fillStyle = '#7cb342';
+                ctx.fillRect(x, y, size, size);
+                
+                // Cold grass
+                ctx.fillStyle = '#558b2f';
+                for (let i = 0; i < 15; i++) {
+                    const grassX = x + Math.random() * size;
+                    const grassY = y + Math.random() * size;
+                    ctx.fillRect(grassX, grassY, 1, 2);
+                }
+                break;
+                
+            default:
+                ctx.fillStyle = '#b8860b';
+                ctx.fillRect(x, y, size, size);
+                
+                // Dry steppe grass
+                ctx.fillStyle = '#daa520';
+                for (let i = 0; i < 20; i++) {
+                    const grassX = x + Math.random() * size;
+                    const grassY = y + Math.random() * size;
+                    ctx.fillRect(grassX, grassY, 1, 1);
+                }
+        }
+    }
+
+    drawAlpineTundraTerrain(ctx, x, y, size, tileType, noise, detailNoise) {
+        switch(tileType) {
+            case 'alpine_peak':
+                const peakGradient = ctx.createLinearGradient(x, y, x, y + size);
+                peakGradient.addColorStop(0, '#ffffff');
+                peakGradient.addColorStop(0.6, '#f0f0f0');
+                peakGradient.addColorStop(1, '#d3d3d3');
+                ctx.fillStyle = peakGradient;
+                ctx.fillRect(x, y, size, size);
+                
+                // Peak formation
+                ctx.fillStyle = '#a9a9a9';
+                ctx.fillRect(x + size/3, y, size/3, size/2);
+                break;
+                
+            case 'mountain_tundra':
+                ctx.fillStyle = '#8fbc8f';
+                ctx.fillRect(x, y, size, size);
+                
+                // Tundra vegetation
+                ctx.fillStyle = '#556b2f';
+                for (let i = 0; i < 8; i++) {
+                    const vegX = x + Math.random() * size;
+                    const vegY = y + Math.random() * size;
+                    ctx.fillRect(vegX, vegY, 1, 1);
+                }
+                break;
+                
+            default:
+                ctx.fillStyle = '#9acd32';
+                ctx.fillRect(x, y, size, size);
+                
+                // Alpine scrub
+                ctx.fillStyle = '#6b8e23';
+                for (let i = 0; i < 6; i++) {
+                    const scrubX = x + Math.random() * size;
+                    const scrubY = y + Math.random() * size;
+                    ctx.fillRect(scrubX, scrubY, 2, 2);
+                }
+        }
+    }
+
     // Enhanced Arctic biome tile renderers with improved textures
     drawArcticIceTile(ctx, x, y, size, noise, detailNoise) {
         // Multi-layer ice texture
@@ -1492,9 +2275,9 @@ class MobileVikingSettlementTycoon {
         ctx.fillStyle = forestFloorGradient;
         ctx.fillRect(x, y, size, size);
         
-        // Forest understory
+        // Dense vegetation
         ctx.globalAlpha = 0.4;
-        ctx.fillStyle = '#2d5016';
+        ctx.fillStyle = '#3e2723';
         for (let i = 0; i < 8; i++) {
             const undergrowthX = x + (Math.sin(x * 0.15 + i) + 1) * size/2;
             const undergrowthY = y + (Math.cos(y * 0.15 + i) + 1) * size/2;
@@ -1583,9 +2366,6 @@ class MobileVikingSettlementTycoon {
                 ctx.fillStyle = '#1a5f1a';
                 ctx.fillRect(treeX - 3, treeY - treeHeight + 2, 6, treeHeight - 1);
                 
-                ctx.fillStyle = '#228b22';
-                ctx.fillRect(treeX - 2, treeY - treeHeight + 1, 4, treeHeight - 2);
-                
                 // Tree top
                 ctx.fillStyle = '#32cd32';
                 ctx.fillRect(treeX - 1, treeY - treeHeight, 2, 2);
@@ -1597,60 +2377,6 @@ class MobileVikingSettlementTycoon {
         ctx.fillStyle = '#90ee90';
         ctx.fillRect(x + size * 0.1, y + size * 0.1, size * 0.3, size * 0.2);
         ctx.globalAlpha = 1;
-    }
-
-    drawBorealClearingTile(ctx, x, y, size, detailNoise, moisture) {
-        // Clearing base with rich soil
-        const clearingGradient = ctx.createRadialGradient(x + size/2, y + size/2, 0, x + size/2, y + size/2, size);
-        clearingGradient.addColorStop(0, '#adff2f');
-        clearingGradient.addColorStop(0.6, '#9acd32');
-        clearingGradient.addColorStop(1, '#7cfc00');
-        ctx.fillStyle = clearingGradient;
-        ctx.fillRect(x, y, size, size);
-        
-        // Rich grass texture with varying heights
-        const grassTypes = [
-            { color: '#6b8e23', density: 20 },
-            { color: '#9acd32', density: 15 },
-            { color: '#32cd32', density: 10 }
-        ];
-        
-        grassTypes.forEach(grassType => {
-            ctx.fillStyle = grassType.color;
-            ctx.globalAlpha = 0.7;
-            for (let i = 0; i < grassType.density; i++) {
-                const grassX = x + (Math.sin(x * 0.1 + i * grassType.density) + 1) * size/2;
-                const grassY = y + (Math.cos(y * 0.1 + i * grassType.density) + 1) * size/2;
-                const grassHeight = 1 + Math.abs(detailNoise + i * 0.1) * 2;
-                ctx.fillRect(grassX, grassY - grassHeight, 1, grassHeight);
-            }
-        });
-        ctx.globalAlpha = 1;
-        
-        // Wildflowers in clearings
-        if (moisture > 0.4) {
-            const flowerColors = ['#ff69b4', '#dda0dd', '#ffb6c1', '#ffd700'];
-            flowerColors.forEach((color, i) => {
-                if (Math.abs(detailNoise + i * 0.3) > 0.2) {
-                    ctx.fillStyle = color;
-                    const flowerX = x + size * (0.2 + i * 0.2);
-                    const flowerY = y + size * (0.3 + Math.sin(detailNoise + i) * 0.3);
-                    ctx.beginPath();
-                    ctx.arc(flowerX, flowerY, 1.5, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            });
-        }
-        
-        // Scattered shrubs
-        if (Math.abs(detailNoise) > 0.3) {
-            ctx.fillStyle = '#228b22';
-            ctx.globalAlpha = 0.8;
-            const shrubX = x + size * (0.6 + detailNoise * 0.2);
-            const shrubY = y + size * (0.4 + detailNoise * 0.3);
-            ctx.fillRect(shrubX - 2, shrubY - 3, 4, 4);
-            ctx.globalAlpha = 1;
-        }
     }
 
     drawRockyTerrainTile(ctx, x, y, size, detailNoise, noise) {
@@ -1728,152 +2454,691 @@ class MobileVikingSettlementTycoon {
         }
     }
 
-    // New enhanced terrain functions for additional biomes
-    drawPolarTerrain(ctx, x, y, size, tileType, noise, detailNoise) {
-        switch(tileType) {
-            case 'polar_ice':
-                // Pure polar ice with wind patterns
-                ctx.fillStyle = '#f0f8ff';
-                ctx.fillRect(x, y, size, size);
-                
-                // Wind-carved patterns
-                ctx.strokeStyle = '#e0e6ff';
-                ctx.lineWidth = 1;
-                ctx.globalAlpha = 0.7;
-                for (let i = 0; i < 4; i++) {
-                    const windY = y + i * size/4 + Math.sin(noise + i) * 3;
-                    ctx.beginPath();
-                    ctx.moveTo(x, windY);
-                    ctx.lineTo(x + size, windY + Math.cos(detailNoise + i) * 2);
-                    ctx.stroke();
-                }
-                ctx.globalAlpha = 1;
-                break;
-                
-            case 'glacial_peak':
-                // Towering glacial formation
-                const glacialGradient = ctx.createLinearGradient(x, y, x, y + size);
-                glacialGradient.addColorStop(0, '#ffffff');
-                glacialGradient.addColorStop(0.4, '#f0f8ff');
-                glacialGradient.addColorStop(1, '#e0e6ff');
-                ctx.fillStyle = glacialGradient;
-                ctx.fillRect(x, y, size, size);
-                
-                // Ice formations
-                ctx.fillStyle = '#b0e0e6';
-                ctx.fillRect(x + size * 0.3, y, size * 0.4, size * 0.6);
-                break;
-                
-            case 'ice_shelf':
-                // Floating ice shelf
-                ctx.fillStyle = '#e0f6ff';
-                ctx.fillRect(x, y, size, size);
-                
-                // Ice edge detail
-                ctx.fillStyle = '#b0e0e6';
-                ctx.fillRect(x, y + size * 0.8, size, size * 0.2);
-                
-                // Crevasses
-                ctx.strokeStyle = '#4682b4';
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.moveTo(x + size * 0.2, y);
-                ctx.lineTo(x + size * 0.3, y + size);
-                ctx.stroke();
-                break;
-                
-            case 'ice_field':
-                // Expansive ice field
-                ctx.fillStyle = '#f8f8ff';
-                ctx.fillRect(x, y, size, size);
-                
-                // Ice texture
-                for (let i = 0; i < 8; i++) {
-                    ctx.fillStyle = '#e6f3ff';
-                    ctx.globalAlpha = 0.5;
-                    const iceX = x + (Math.sin(x * 0.1 + i) + 1) * size/2;
-                    const iceY = y + (Math.cos(y * 0.1 + i) + 1) * size/2;
-                    ctx.fillRect(iceX, iceY, 2, 2);
-                }
-                ctx.globalAlpha = 1;
-                break;
+    drawRockyShoreTile(ctx, x, y, size, detailNoise, noise) {
+        // Rocky shore base
+        ctx.fillStyle = '#4fc3f7';
+        ctx.fillRect(x, y, size, size);
+        
+        // Water texture
+        ctx.globalAlpha = 0.5;
+        ctx.fillStyle = '#29b6f6';
+        for (let i = 0; i < 6; i++) {
+            const rippleX = x + (Math.sin(x * 0.1 + i) + 1) * size/2;
+            const rippleY = y + (Math.cos(y * 0.1 + i) + 1) * size/2;
+            ctx.beginPath();
+            ctx.arc(rippleX, rippleY, 2 + Math.abs(detailNoise), 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        
+        // Rocky formations
+        ctx.fillStyle = '#8d6e63';
+        for (let i = 0; i < 6; i++) {
+            const rockX = x + (Math.sin(x * 0.1 + i) + 1) * size/2;
+            const rockY = y + (Math.cos(y * 0.1 + i) + 1) * size/2;
+            const rockSize = 2 + Math.abs(detailNoise + i * 0.2) * 2;
+            ctx.fillRect(rockX, rockY, rockSize, rockSize);
         }
     }
 
-    drawArcticDesertTerrain(ctx, x, y, size, tileType, noise, detailNoise) {
-        switch(tileType) {
-            case 'frozen_ground':
-                // Permafrost base
-                ctx.fillStyle = '#8b7d6b';
-                ctx.fillRect(x, y, size, size);
+    drawCoastalForestTile(ctx, x, y, size, detailNoise, moisture) {
+        // Coastal forest base
+        ctx.fillStyle = '#388e3c';
+        ctx.fillRect(x, y, size, size);
+        
+        // Coastal vegetation
+        ctx.globalAlpha = 0.8;
+        for (let i = 0; i < 12; i++) {
+            const vegX = x + (Math.sin(x * 0.15 + i) + 1) * size/2;
+            const vegY = y + (Math.cos(y * 0.15 + i) + 1) * size/2;
+            const vegSize = 2 + Math.abs(detailNoise + i * 0.1) * 3;
+            ctx.fillRect(vegX, vegY, vegSize, vegSize);
+        }
+        
+        // Coastal flowers
+        if (moisture > 0.6 && Math.abs(detailNoise) > 0.3) {
+            const flowerColors = ['#ff69b4', '#dda0dd', '#ffb6c1', '#ffd700'];
+            for (let i = 0; i < 4; i++) {
+                ctx.fillStyle = flowerColors[i];
+                const flowerX = x + size * (0.2 + i * 0.2);
+                const flowerY = y + size * (0.3 + Math.sin(detailNoise + i) * 0.3);
+                ctx.beginPath();
+                ctx.arc(flowerX, flowerY, 1.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        // Coastal trees
+        const trees = [
+            { x: 0.2, y: 0.3, size: 0.15 },
+            { x: 0.6, y: 0.2, size: 0.2 },
+            { x: 0.8, y: 0.7, size: 0.12 },
+            { x: 0.3, y: 0.8, size: 0.18 },
+            { x: 0.7, y: 0.5, size: 0.1 }
+        ];
+        
+        trees.forEach((tree, i) => {
+            if (Math.abs(detailNoise + i * 0.2) > 0.1) {
+                const treeX = x + tree.x * size;
+                const treeY = y + tree.y * size;
+                const treeSize = tree.size * size + Math.abs(noise + i) * 3;
                 
-                // Frost patterns
-                ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = 1;
-                ctx.globalAlpha = 0.6;
-                for (let i = 0; i < 6; i++) {
-                    const frostX = x + Math.sin(detailNoise + i) * size/3 + size/2;
-                    const frostY = y + Math.cos(detailNoise + i) * size/3 + size/2;
-                    ctx.beginPath();
-                    ctx.arc(frostX, frostY, 1 + Math.abs(noise), 0, Math.PI * 2);
-                    ctx.stroke();
-                }
-                ctx.globalAlpha = 1;
-                break;
+                // Tree trunk
+                ctx.fillStyle = '#654321';
+                ctx.fillRect(treeX - 1, treeY, 2, treeSize);
                 
-            case 'frozen_scree':
-                // Rocky debris with frost
-                ctx.fillStyle = '#696969';
-                ctx.fillRect(x, y, size, size);
+                // Tree canopy
+                ctx.fillStyle = '#228b22';
+                ctx.fillRect(treeX - 3, treeY - treeSize + 2, 6, treeSize - 1);
                 
-                // Scree particles
-                for (let i = 0; i < 12; i++) {
-                    ctx.fillStyle = '#808080';
-                    const screeX = x + Math.random() * size;
-                    const screeY = y + Math.random() * size;
-                    ctx.fillRect(screeX, screeY, 1, 1);
-                }
-                
-                // Frost coating
-                ctx.fillStyle = '#f0f0f0';
-                ctx.globalAlpha = 0.4;
-                ctx.fillRect(x, y, size, size/4);
-                ctx.globalAlpha = 1;
-                break;
-                
-            case 'permafrost':
-                // Permanently frozen ground
-                ctx.fillStyle = '#a0855b';
-                ctx.fillRect(x, y, size, size);
-                
-                // Ice lens formations
-                ctx.fillStyle = '#b0e0e6';
-                ctx.globalAlpha = 0.7;
-                for (let i = 0; i < 3; i++) {
-                    const lensY = y + i * size/3 + size/6;
-                    ctx.fillRect(x, lensY, size, 2);
-                }
-                ctx.globalAlpha = 1;
-                break;
-                
-            case 'arctic_gravel':
-                // Gravel deposits
-                ctx.fillStyle = '#778899';
-                ctx.fillRect(x, y, size, size);
-                
-                // Individual gravel pieces
-                const gravelColors = ['#696969', '#708090', '#2f4f4f'];
-                for (let i = 0; i < 20; i++) {
-                    ctx.fillStyle = gravelColors[i % gravelColors.length];
-                    const gravelX = x + Math.random() * size;
-                    const gravelY = y + Math.random() * size;
-                    ctx.fillRect(gravelX, gravelY, 1, 1);
-                }
-                break;
+                // Tree top
+                ctx.fillStyle = '#32cd32';
+                ctx.fillRect(treeX - 1, treeY - treeSize, 2, 2);
+            }
+        });
+        
+        // Coastal ambiance
+        ctx.globalAlpha = 0.2;
+        ctx.fillStyle = '#90ee90';
+        ctx.fillRect(x + size * 0.1, y + size * 0.1, size * 0.3, size * 0.2);
+        ctx.globalAlpha = 1;
+    }
+
+    drawSeaCliffTile(ctx, x, y, size, detailNoise, noise) {
+        // Sea cliff base
+        ctx.fillStyle = '#4fc3f7';
+        ctx.fillRect(x, y, size, size);
+        
+        // Cliff texture
+        ctx.globalAlpha = 0.5;
+        ctx.fillStyle = '#29b6f6';
+        for (let i = 0; i < 6; i++) {
+            const rippleX = x + (Math.sin(x * 0.1 + i) + 1) * size/2;
+            const rippleY = y + (Math.cos(y * 0.1 + i) + 1) * size/2;
+            ctx.beginPath();
+            ctx.arc(rippleX, rippleY, 2 + Math.abs(detailNoise), 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        
+        // Rocky formations
+        ctx.fillStyle = '#8d6e63';
+        for (let i = 0; i < 6; i++) {
+            const rockX = x + (Math.sin(x * 0.1 + i) + 1) * size/2;
+            const rockY = y + (Math.cos(y * 0.1 + i) + 1) * size/2;
+            const rockSize = 2 + Math.abs(detailNoise + i * 0.2) * 2;
+            ctx.fillRect(rockX, rockY, rockSize, rockSize);
         }
     }
-    
-    // Additional enhanced terrain rendering methods for completeness
+
+    drawCoastalGrassTile(ctx, x, y, size, moisture, detailNoise) {
+        // Coastal grass base
+        ctx.fillStyle = '#9acd32';
+        ctx.fillRect(x, y, size, size);
+        
+        // Grass texture
+        ctx.globalAlpha = 0.7;
+        ctx.fillStyle = '#6b8e23';
+        for (let i = 0; i < 15; i++) {
+            const grassX = x + (Math.sin(x * 0.1 + i) + 1) * size/2;
+            const grassY = y + (Math.cos(y * 0.1 + i) + 1) * size/2;
+            ctx.fillRect(grassX, grassY, 1, 2);
+        }
+        ctx.globalAlpha = 1;
+        
+        // Coastal flowers
+        if (moisture > 0.6 && Math.abs(detailNoise) > 0.3) {
+            const flowerColors = ['#ff69b4', '#dda0dd', '#ffb6c1', '#ffd700'];
+            for (let i = 0; i < 4; i++) {
+                ctx.fillStyle = flowerColors[i];
+                const flowerX = x + size * (0.2 + i * 0.2);
+                const flowerY = y + size * (0.3 + Math.sin(detailNoise + i) * 0.3);
+                ctx.beginPath();
+                ctx.arc(flowerX, flowerY, 1.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        // Coastal trees
+        const trees = [
+            { x: 0.2, y: 0.3, size: 0.15 },
+            { x: 0.6, y: 0.2, size: 0.2 },
+            { x: 0.8, y: 0.7, size: 0.12 },
+            { x: 0.3, y: 0.8, size: 0.18 },
+            { x: 0.7, y: 0.5, size: 0.1 }
+        ];
+        
+        trees.forEach((tree, i) => {
+            if (Math.abs(detailNoise + i * 0.2) > 0.1) {
+                const treeX = x + tree.x * size;
+                const treeY = y + tree.y * size;
+                const treeSize = tree.size * size + Math.abs(noise + i) * 3;
+                
+                // Tree trunk
+                ctx.fillStyle = '#654321';
+                ctx.fillRect(treeX - 1, treeY, 2, treeSize);
+                
+                // Tree canopy
+                ctx.fillStyle = '#228b22';
+                ctx.fillRect(treeX - 3, treeY - treeSize + 2, 6, treeSize - 1);
+                
+                // Tree top
+                ctx.fillStyle = '#32cd32';
+                ctx.fillRect(treeX - 1, treeY - treeSize, 2, 2);
+            }
+        });
+        
+        // Coastal ambiance
+        ctx.globalAlpha = 0.2;
+        ctx.fillStyle = '#90ee90';
+        ctx.fillRect(x + size * 0.1, y + size * 0.1, size * 0.3, size * 0.2);
+        ctx.globalAlpha = 1;
+    }
+
+    drawBeachTile(ctx, x, y, size, tileType, noise, detailNoise, moisture) {
+        let sandColor, accentColor;
+        
+        switch(tileType) {
+            case 'white_sand_beach':
+                sandColor = '#ffffff';
+                accentColor = '#f5f5f5';
+                break;
+            case 'island_beach':
+                sandColor = '#fff9c4';
+                accentColor = '#f0e68c';
+                break;
+            default:
+                sandColor = '#f5e6a3';
+                accentColor = '#deb887';
+        }
+        
+        const gradient = ctx.createLinearGradient(x, y, x + size, y + size);
+        gradient.addColorStop(0, sandColor);
+        gradient.addColorStop(1, accentColor);
+        ctx.fillStyle = gradient;
+        ctx.fillRect(x, y, size, size);
+        
+        // Sand texture
+        ctx.fillStyle = accentColor;
+        for (let i = 0; i < 20; i++) {
+            const dotX = x + Math.random() * size;
+            const dotY = y + Math.random() * size;
+            ctx.beginPath();
+            ctx.arc(dotX, dotY, 0.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Shells and debris
+        if (Math.random() < 0.3) {
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(x + size * 0.7, y + size * 0.3, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    drawAlpineForestTile(ctx, x, y, size, detailNoise, moisture) {
+        // Alpine forest base
+        ctx.fillStyle = '#388e3c';
+        ctx.fillRect(x, y, size, size);
+        
+        // Alpine vegetation
+        ctx.globalAlpha = 0.8;
+        for (let i = 0; i < 12; i++) {
+            const vegX = x + (Math.sin(x * 0.15 + i) + 1) * size/2;
+            const vegY = y + (Math.cos(y * 0.15 + i) + 1) * size/2;
+            const vegSize = 2 + Math.abs(detailNoise + i * 0.1) * 3;
+            ctx.fillRect(vegX, vegY, vegSize, vegSize);
+        }
+        
+        // Alpine flowers
+        if (moisture > 0.6 && Math.abs(detailNoise) > 0.3) {
+            const flowerColors = ['#ff69b4', '#dda0dd', '#ffb6c1', '#ffd700'];
+            for (let i = 0; i < 4; i++) {
+                ctx.fillStyle = flowerColors[i];
+                const flowerX = x + size * (0.2 + i * 0.2);
+                const flowerY = y + size * (0.3 + Math.sin(detailNoise + i) * 0.3);
+                ctx.beginPath();
+                ctx.arc(flowerX, flowerY, 1.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        // Alpine trees
+        const trees = [
+            { x: 0.2, y: 0.3, size: 0.15 },
+            { x: 0.6, y: 0.2, size: 0.2 },
+            { x: 0.8, y: 0.7, size: 0.12 },
+            { x: 0.3, y: 0.8, size: 0.18 },
+            { x: 0.7, y: 0.5, size: 0.1 }
+        ];
+        
+        trees.forEach((tree, i) => {
+            if (Math.abs(detailNoise + i * 0.2) > 0.1) {
+                const treeX = x + tree.x * size;
+                const treeY = y + tree.y * size;
+                const treeSize = tree.size * size + Math.abs(noise + i) * 3;
+                
+                // Tree trunk
+                ctx.fillStyle = '#654321';
+                ctx.fillRect(treeX - 1, treeY, 2, treeSize);
+                
+                // Tree canopy
+                ctx.fillStyle = '#228b22';
+                ctx.fillRect(treeX - 3, treeY - treeSize + 2, 6, treeSize - 1);
+                
+                // Tree top
+                ctx.fillStyle = '#32cd32';
+                ctx.fillRect(treeX - 1, treeY - treeSize, 2, 2);
+            }
+        });
+        
+        // Alpine ambiance
+        ctx.globalAlpha = 0.2;
+        ctx.fillStyle = '#90ee90';
+        ctx.fillRect(x + size * 0.1, y + size * 0.1, size * 0.3, size * 0.2);
+        ctx.globalAlpha = 1;
+    }
+
+    drawRockyPeakTile(ctx, x, y, size, detailNoise, noise) {
+        // Rocky peak base
+        ctx.fillStyle = '#4fc3f7';
+        ctx.fillRect(x, y, size, size);
+        
+        // Peak texture
+        ctx.globalAlpha = 0.5;
+        ctx.fillStyle = '#29b6f6';
+        for (let i = 0; i < 6; i++) {
+            const rippleX = x + (Math.sin(x * 0.1 + i) + 1) * size/2;
+            const rippleY = y + (Math.cos(y * 0.1 + i) + 1) * size/2;
+            ctx.beginPath();
+            ctx.arc(rippleX, rippleY, 2 + Math.abs(detailNoise), 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        
+        // Rocky formations
+        ctx.fillStyle = '#8d6e63';
+        for (let i = 0; i < 6; i++) {
+            const rockX = x + (Math.sin(x * 0.1 + i) + 1) * size/2;
+            const rockY = y + (Math.cos(y * 0.1 + i) + 1) * size/2;
+            const rockSize = 2 + Math.abs(detailNoise + i * 0.2) * 2;
+            ctx.fillRect(rockX, rockY, rockSize, rockSize);
+        }
+    }
+
+    drawAlpineMeadowTile(ctx, x, y, size, detailNoise, moisture) {
+        // Alpine meadow base
+        ctx.fillStyle = '#9acd32';
+        ctx.fillRect(x, y, size, size);
+        
+        // Meadow texture
+        ctx.globalAlpha = 0.7;
+        ctx.fillStyle = '#6b8e23';
+        for (let i = 0; i < 15; i++) {
+            const grassX = x + (Math.sin(x * 0.1 + i) + 1) * size/2;
+            const grassY = y + (Math.cos(y * 0.1 + i) + 1) * size/2;
+            ctx.fillRect(grassX, grassY, 1, 2);
+        }
+        ctx.globalAlpha = 1;
+        
+        // Alpine flowers
+        if (moisture > 0.6 && Math.abs(detailNoise) > 0.3) {
+            const flowerColors = ['#ff69b4', '#dda0dd', '#ffb6c1', '#ffd700'];
+            for (let i = 0; i < 4; i++) {
+                ctx.fillStyle = flowerColors[i];
+                const flowerX = x + size * (0.2 + i * 0.2);
+                const flowerY = y + size * (0.3 + Math.sin(detailNoise + i) * 0.3);
+                ctx.beginPath();
+                ctx.arc(flowerX, flowerY, 1.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        // Alpine trees
+        const trees = [
+            { x: 0.2, y: 0.3, size: 0.15 },
+            { x: 0.6, y: 0.2, size: 0.2 },
+            { x: 0.8, y: 0.7, size: 0.12 },
+            { x: 0.3, y: 0.8, size: 0.18 },
+            { x: 0.7, y: 0.5, size: 0.1 }
+        ];
+        
+        trees.forEach((tree, i) => {
+            if (Math.abs(detailNoise + i * 0.2) > 0.1) {
+                const treeX = x + tree.x * size;
+                const treeY = y + tree.y * size;
+                const treeSize = tree.size * size + Math.abs(noise + i) * 3;
+                
+                // Tree trunk
+                ctx.fillStyle = '#654321';
+                ctx.fillRect(treeX - 1, treeY, 2, treeSize);
+                
+                // Tree canopy
+                ctx.fillStyle = '#228b22';
+                ctx.fillRect(treeX - 3, treeY - treeSize + 2, 6, treeSize - 1);
+                
+                // Tree top
+                ctx.fillStyle = '#32cd32';
+                ctx.fillRect(treeX - 1, treeY - treeSize, 2, 2);
+            }
+        });
+        
+        // Alpine ambiance
+        ctx.globalAlpha = 0.2;
+        ctx.fillStyle = '#90ee90';
+        ctx.fillRect(x + size * 0.1, y + size * 0.1, size * 0.3, size * 0.2);
+        ctx.globalAlpha = 1;
+    }
+
+    drawMountainForestTile(ctx, x, y, size, detailNoise, noise) {
+        // Mountain forest base
+        ctx.fillStyle = '#388e3c';
+        ctx.fillRect(x, y, size, size);
+        
+        // Forest texture
+        ctx.globalAlpha = 0.8;
+        for (let i = 0; i < 12; i++) {
+            const vegX = x + (Math.sin(x * 0.15 + i) + 1) * size/2;
+            const vegY = y + (Math.cos(y * 0.15 + i) + 1) * size/2;
+            const vegSize = 2 + Math.abs(detailNoise + i * 0.1) * 3;
+            ctx.fillRect(vegX, vegY, vegSize, vegSize);
+        }
+        
+        // Mountain flowers
+        if (Math.abs(detailNoise) > 0.3) {
+            const flowerColors = ['#ff69b4', '#dda0dd', '#ffb6c1', '#ffd700'];
+            for (let i = 0; i < 4; i++) {
+                ctx.fillStyle = flowerColors[i];
+                const flowerX = x + size * (0.2 + i * 0.2);
+                const flowerY = y + size * (0.3 + Math.sin(detailNoise + i) * 0.3);
+                ctx.beginPath();
+                ctx.arc(flowerX, flowerY, 1.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        // Mountain trees
+        const trees = [
+            { x: 0.2, y: 0.3, size: 0.15 },
+            { x: 0.6, y: 0.2, size: 0.2 },
+            { x: 0.8, y: 0.7, size: 0.12 },
+            { x: 0.3, y: 0.8, size: 0.18 },
+            { x: 0.7, y: 0.5, size: 0.1 }
+        ];
+        
+        trees.forEach((tree, i) => {
+            if (Math.abs(detailNoise + i * 0.2) > 0.1) {
+                const treeX = x + tree.x * size;
+                const treeY = y + tree.y * size;
+                const treeSize = tree.size * size + Math.abs(noise + i) * 3;
+                
+                // Tree trunk
+                ctx.fillStyle = '#654321';
+                ctx.fillRect(treeX - 1, treeY, 2, treeSize);
+                
+                // Tree canopy
+                ctx.fillStyle = '#228b22';
+                ctx.fillRect(treeX - 3, treeY - treeSize + 2, 6, treeSize - 1);
+                
+                // Tree top
+                ctx.fillStyle = '#32cd32';
+                ctx.fillRect(treeX - 1, treeY - treeSize, 2, 2);
+            }
+        });
+        
+        // Mountain ambiance
+        ctx.globalAlpha = 0.2;
+        ctx.fillStyle = '#90ee90';
+        ctx.fillRect(x + size * 0.1, y + size * 0.1, size * 0.3, size * 0.2);
+        ctx.globalAlpha = 1;
+    }
+
+    drawMountainStreamTile(ctx, x, y, size, noise) {
+        // Mountain stream base
+        ctx.fillStyle = '#4fc3f7';
+        ctx.fillRect(x, y, size, size);
+        
+        // Stream texture
+        ctx.globalAlpha = 0.5;
+        ctx.fillStyle = '#29b6f6';
+        for (let i = 0; i < 6; i++) {
+            const rippleX = x + (Math.sin(x * 0.1 + i) + 1) * size/2;
+            const rippleY = y + (Math.cos(y * 0.1 + i) + 1) * size/2;
+            ctx.beginPath();
+            ctx.arc(rippleX, rippleY, 2 + Math.abs(noise), 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        
+        // Rocky formations
+        ctx.fillStyle = '#8d6e63';
+        for (let i = 0; i < 6; i++) {
+            const rockX = x + (Math.sin(x * 0.1 + i) + 1) * size/2;
+            const rockY = y + (Math.cos(y * 0.1 + i) + 1) * size/2;
+            const rockSize = 2 + Math.abs(noise + i) * 2;
+            ctx.fillRect(rockX, rockY, rockSize, rockSize);
+        }
+    }
+
+    drawRiverTile(ctx, x, y, size, noise) {
+        // River base
+        ctx.fillStyle = '#4fc3f7';
+        ctx.fillRect(x, y, size, size);
+        
+        // Water texture
+        ctx.globalAlpha = 0.5;
+        ctx.fillStyle = '#29b6f6';
+        for (let i = 0; i < 6; i++) {
+            const rippleX = x + (Math.sin(x * 0.1 + i) + 1) * size/2;
+            const rippleY = y + (Math.cos(y * 0.1 + i) + 1) * size/2;
+            ctx.beginPath();
+            ctx.arc(rippleX, rippleY, 2 + Math.abs(noise), 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        
+        // River banks
+        ctx.fillStyle = '#8d6e63';
+        for (let i = 0; i < 6; i++) {
+            const bankX = x + (Math.sin(x * 0.1 + i) + 1) * size/2;
+            const bankY = y + (Math.cos(y * 0.1 + i) + 1) * size/2;
+            const bankSize = 2 + Math.abs(noise + i) * 2;
+            ctx.fillRect(bankX, bankY, bankSize, bankSize);
+        }
+    }
+
+    drawMixedForestTile(ctx, x, y, size, detailNoise, noise) {
+        // Mixed forest base
+        ctx.fillStyle = '#388e3c';
+        ctx.fillRect(x, y, size, size);
+        
+        // Mixed vegetation
+        ctx.globalAlpha = 0.8;
+        for (let i = 0; i < 12; i++) {
+            const vegX = x + (Math.sin(x * 0.15 + i) + 1) * size/2;
+            const vegY = y + (Math.cos(y * 0.15 + i) + 1) * size/2;
+            const vegSize = 2 + Math.abs(detailNoise + i * 0.1) * 3;
+            ctx.fillRect(vegX, vegY, vegSize, vegSize);
+        }
+        
+        // Mixed flowers
+        if (Math.abs(detailNoise) > 0.3) {
+            const flowerColors = ['#ff69b4', '#dda0dd', '#ffb6c1', '#ffd700'];
+            for (let i = 0; i < 4; i++) {
+                ctx.fillStyle = flowerColors[i];
+                const flowerX = x + size * (0.2 + i * 0.2);
+                const flowerY = y + size * (0.3 + Math.sin(detailNoise + i) * 0.3);
+                ctx.beginPath();
+                ctx.arc(flowerX, flowerY, 1.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        // Mixed trees
+        const trees = [
+            { x: 0.2, y: 0.3, size: 0.15 },
+            { x: 0.6, y: 0.2, size: 0.2 },
+            { x: 0.8, y: 0.7, size: 0.12 },
+            { x: 0.3, y: 0.8, size: 0.18 },
+            { x: 0.7, y: 0.5, size: 0.1 }
+        ];
+        
+        trees.forEach((tree, i) => {
+            if (Math.abs(detailNoise + i * 0.2) > 0.1) {
+                const treeX = x + tree.x * size;
+                const treeY = y + tree.y * size;
+                const treeSize = tree.size * size + Math.abs(noise + i) * 3;
+                
+                // Tree trunk
+                ctx.fillStyle = '#654321';
+                ctx.fillRect(treeX - 1, treeY, 2, treeSize);
+                
+                // Tree canopy
+                ctx.fillStyle = '#228b22';
+                ctx.fillRect(treeX - 3, treeY - treeSize + 2, 6, treeSize - 1);
+                
+                // Tree top
+                ctx.fillStyle = '#32cd32';
+                ctx.fillRect(treeX - 1, treeY - treeSize, 2, 2);
+            }
+        });
+        
+        // Mixed ambiance
+        ctx.globalAlpha = 0.2;
+        ctx.fillStyle = '#90ee90';
+        ctx.fillRect(x + size * 0.1, y + size * 0.1, size * 0.3, size * 0.2);
+        ctx.globalAlpha = 1;
+    }
+
+    drawDryGrasslandTile(ctx, x, y, size, detailNoise, moisture) {
+        // Dry grassland base
+        ctx.fillStyle = '#9ccc65';
+        ctx.fillRect(x, y, size, size);
+        
+        // Grass texture
+        ctx.globalAlpha = 0.7;
+        ctx.fillStyle = '#689f38';
+        for (let i = 0; i < 15; i++) {
+            const grassX = x + Math.random() * size;
+            const grassY = y + Math.random() * size;
+            ctx.fillRect(grassX, grassY, 1, 2);
+        }
+        ctx.globalAlpha = 1;
+        
+        // Dry flowers
+        if (moisture > 0.6 && Math.abs(detailNoise) > 0.3) {
+            const flowerColors = ['#ff69b4', '#dda0dd', '#ffb6c1', '#ffd700'];
+            for (let i = 0; i < 4; i++) {
+                ctx.fillStyle = flowerColors[i];
+                const flowerX = x + size * (0.2 + i * 0.2);
+                const flowerY = y + size * (0.3 + Math.sin(detailNoise + i) * 0.3);
+                ctx.beginPath();
+                ctx.arc(flowerX, flowerY, 1.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        // Dry trees
+        const trees = [
+            { x: 0.2, y: 0.3, size: 0.15 },
+            { x: 0.6, y: 0.2, size: 0.2 },
+            { x: 0.8, y: 0.7, size: 0.12 },
+            { x: 0.3, y: 0.8, size: 0.18 },
+            { x: 0.7, y: 0.5, size: 0.1 }
+        ];
+        
+        trees.forEach((tree, i) => {
+            if (Math.abs(detailNoise + i * 0.2) > 0.1) {
+                const treeX = x + tree.x * size;
+                const treeY = y + tree.y * size;
+                const treeSize = tree.size * size + Math.abs(noise + i) * 3;
+                
+                // Tree trunk
+                ctx.fillStyle = '#654321';
+                ctx.fillRect(treeX - 1, treeY, 2, treeSize);
+                
+                // Tree canopy
+                ctx.fillStyle = '#228b22';
+                ctx.fillRect(treeX - 3, treeY - treeSize + 2, 6, treeSize - 1);
+                
+                // Tree top
+                ctx.fillStyle = '#32cd32';
+                ctx.fillRect(treeX - 1, treeY - treeSize, 2, 2);
+            }
+        });
+        
+        // Dry ambiance
+        ctx.globalAlpha = 0.2;
+        ctx.fillStyle = '#90ee90';
+        ctx.fillRect(x + size * 0.1, y + size * 0.1, size * 0.3, size * 0.2);
+        ctx.globalAlpha = 1;
+    }
+
+    drawFloweringMeadowTile(ctx, x, y, size, detailNoise, moisture) {
+        // Flowering meadow base
+        ctx.fillStyle = '#9acd32';
+        ctx.fillRect(x, y, size, size);
+        
+        // Meadow texture
+        ctx.globalAlpha = 0.7;
+        ctx.fillStyle = '#6b8e23';
+        for (let i = 0; i < 15; i++) {
+            const grassX = x + (Math.sin(x * 0.1 + i) + 1) * size/2;
+            const grassY = y + (Math.cos(y * 0.1 + i) + 1) * size/2;
+            ctx.fillRect(grassX, grassY, 1, 2);
+        }
+        ctx.globalAlpha = 1;
+        
+        // Flowers
+        if (moisture > 0.6 && Math.abs(detailNoise) > 0.3) {
+            const flowerColors = ['#ff69b4', '#dda0dd', '#ffb6c1', '#ffd700'];
+            for (let i = 0; i < 4; i++) {
+                ctx.fillStyle = flowerColors[i];
+                const flowerX = x + size * (0.2 + i * 0.2);
+                const flowerY = y + size * (0.3 + Math.sin(detailNoise + i) * 0.3);
+                ctx.beginPath();
+                ctx.arc(flowerX, flowerY, 1.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        // Trees
+        const trees = [
+            { x: 0.2, y: 0.3, size: 0.15 },
+            { x: 0.6, y: 0.2, size: 0.2 },
+            { x: 0.8, y: 0.7, size: 0.12 },
+            { x: 0.3, y: 0.8, size: 0.18 },
+            { x: 0.7, y: 0.5, size: 0.1 }
+        ];
+        
+        trees.forEach((tree, i) => {
+            if (Math.abs(detailNoise + i * 0.2) > 0.1) {
+                const treeX = x + tree.x * size;
+                const treeY = y + tree.y * size;
+                const treeSize = tree.size * size + Math.abs(noise + i) * 3;
+                
+                // Tree trunk
+                ctx.fillStyle = '#654321';
+                ctx.fillRect(treeX - 1, treeY, 2, treeSize);
+                
+                // Tree canopy
+                ctx.fillStyle = '#228b22';
+                ctx.fillRect(treeX - 3, treeY - treeSize + 2, 6, treeSize - 1);
+                
+                // Tree top
+                ctx.fillStyle = '#32cd32';
+                ctx.fillRect(treeX - 1, treeY - treeSize, 2, 2);
+            }
+        });
+        
+        // Ambiance
+        ctx.globalAlpha = 0.2;
+        ctx.fillStyle = '#90ee90';
+        ctx.fillRect(x + size * 0.1, y + size * 0.1, size * 0.3, size * 0.2);
+        ctx.globalAlpha = 1;
+    }
+
     drawEnhancedGrassTile(ctx, x, y, size, detailNoise, moisture, noise) {
         // Enhanced grass with seasonal variations
         const baseColors = {
@@ -1924,7 +3189,7 @@ class MobileVikingSettlementTycoon {
         
         // Wildflowers in fertile areas
         if (moisture > 0.6 && Math.abs(detailNoise) > 0.3) {
-            const flowerColors = ['#ff69b4', '#ffd700', '#dda0dd', '#ff6347'];
+            const flowerColors = ['#ff69b4', '#dda0dd', '#ff6347', '#ffd700'];
             for (let i = 0; i < 4; i++) {
                 ctx.fillStyle = flowerColors[i];
                 const flowerX = x + size * (0.2 + i * 0.2);
@@ -1952,48 +3217,22 @@ class MobileVikingSettlementTycoon {
             ctx.fillStyle = '#ffffff';
             const crystalX = x + (Math.sin(x * 0.05 + i) + 1) * size/2;
             const crystalY = y + (Math.cos(y * 0.05 + i) + 1) * size/2;
-            const crystalSize = Math.abs(detailNoise + i * 0.1) + 0.5;
-            
-            // Six-pointed snow crystal
-            ctx.save();
-            ctx.translate(crystalX, crystalY);
-            ctx.rotate(noise + i);
-            for (let j = 0; j < 6; j++) {
-                ctx.rotate(Math.PI / 3);
-                ctx.fillRect(-crystalSize/2, -crystalSize/2, crystalSize, 1);
-            }
-            ctx.restore();
+            ctx.beginPath();
+            ctx.arc(crystalX, crystalY, 1, 0, Math.PI * 2);
+            ctx.fill();
         }
         ctx.globalAlpha = 1;
         
-        // Snow drifts with wind patterns
-        const driftCount = Math.abs(detailNoise) > 0.3 ? 4 : 2;
-        ctx.fillStyle = '#f8f8ff';
-        ctx.globalAlpha = 0.6;
-        for (let i = 0; i < driftCount; i++) {
-            const driftX = x + Math.sin(noise + i) * size/4 + size/2;
-            const driftY = y + Math.cos(noise + i) * size/4 + size/2;
-            const driftWidth = 4 + Math.abs(detailNoise) * 3;
-            const driftHeight = 2 + Math.abs(noise + i) * 2;
-            
-            ctx.save();
-            ctx.translate(driftX, driftY);
-            ctx.rotate(noise * 0.5);
-            ctx.fillRect(-driftWidth/2, -driftHeight/2, driftWidth, driftHeight);
-            ctx.restore();
-        }
-        ctx.globalAlpha = 1;
-        
-        // Footprint or animal tracks
-        if (Math.abs(noise) > 0.7) {
-            ctx.fillStyle = '#d3d3d3';
+        // Ice formations for glacial types
+        if (Math.abs(noise) > 0.6) {
+            ctx.strokeStyle = '#b0e0e6';
+            ctx.lineWidth = 1;
             ctx.globalAlpha = 0.6;
             for (let i = 0; i < 3; i++) {
-                const trackX = x + size * 0.2 + i * size/4;
-                const trackY = y + size * 0.6 + Math.sin(i) * size/8;
                 ctx.beginPath();
-                ctx.arc(trackX, trackY, 1.5, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.moveTo(x + i * size/3, y);
+                ctx.lineTo(x + i * size/3 + size/6, y + size);
+                ctx.stroke();
             }
             ctx.globalAlpha = 1;
         }
@@ -2398,7 +3637,7 @@ class MobileVikingSettlementTycoon {
                     
                     const gradient = ctx.createRadialGradient(localX, localY, 0, localX, localY, anim.radius);
                     gradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
-                    gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.5)');
+                    gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.6)');
                     gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
                     
                     ctx.fillStyle = gradient;
