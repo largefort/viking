@@ -1413,7 +1413,6 @@ class MobileVikingSettlementTycoon {
             case 'tropical_rainforest':
             case 'dense_jungle':
             case 'jungle_canopy':
-            case 'jungle_floor':
             case 'jungle_swamp':
                 this.drawTropicalForestTile(ctx, x, y, size, tileType, noise, detailNoise, moisture);
                 break;
