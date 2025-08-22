@@ -514,37 +514,60 @@ class MobileVikingSettlementTycoon {
     }
     
     saveMobileGame() {
-        const gameState = {
-            version: this.gameVersion,
-            resources: this.resources,
-            population: this.population,
-            buildings: this.buildings,
-            camera: this.camera,
-            scouts: this.scouts,
-            seed: this.seed,
-            exploredAreas: Array.from(this.exploredAreas),
-            deviceInfo: this.deviceInfo,
-            saveTime: Date.now()
-        };
-        
-        localStorage.setItem('vikingSettlementMobile', JSON.stringify(gameState));
-        this.showMobileNotification('Game saved!', 'success');
+        try {
+            // Convert fog of war data to serializable format
+            const fogOfWarData = {};
+            for (const [chunkKey, fogData] of this.fogOfWar) {
+                // Convert canvas to base64 data URL for storage
+                fogOfWarData[chunkKey] = fogData.canvas.toDataURL();
+            }
+
+            const gameState = {
+                version: this.gameVersion,
+                resources: this.resources,
+                population: this.population,
+                buildings: this.buildings,
+                camera: this.camera,
+                scouts: this.scouts,
+                seed: this.seed,
+                exploredAreas: Array.from(this.exploredAreas),
+                fogOfWarData: fogOfWarData,
+                deviceInfo: this.deviceInfo,
+                saveTime: Date.now()
+            };
+            
+            localStorage.setItem('vikingSettlementMobile', JSON.stringify(gameState));
+            this.showMobileNotification('Game saved!', 'success');
+        } catch (error) {
+            console.error('Failed to save mobile game:', error);
+            this.showMobileNotification('Failed to save game!', 'error');
+        }
     }
     
     loadGame() {
-        const saved = localStorage.getItem('vikingSettlementMobile');
-        if (saved) {
+        try {
+            const saved = localStorage.getItem('vikingSettlementMobile');
+            if (!saved) return false;
+
             const gameState = JSON.parse(saved);
             
             // Verify version compatibility
-            if (gameState.version !== this.gameVersion) {
-                this.showMobileNotification('Save version mismatch, starting fresh', 'warning');
+            if (!gameState.version || gameState.version !== this.gameVersion) {
+                console.warn('Version mismatch or missing version in save');
+                // Don't reject - attempt to load anyway with warning
+                this.showMobileNotification('Save version different, loading anyway...', 'warning');
+            }
+
+            // Validate save data integrity
+            if (!this.validateSaveData(gameState)) {
+                this.showMobileNotification('Save data corrupted, starting fresh', 'error');
+                localStorage.removeItem('vikingSettlementMobile');
                 return false;
             }
             
-            this.resources = gameState.resources || this.resources;
-            this.population = gameState.population || this.population;
-            this.buildings = gameState.buildings || this.buildings;
+            this.resources = gameState.resources || { food: 100, wood: 50, iron: 25, gold: 10 };
+            this.population = gameState.population || 5;
+            this.buildings = gameState.buildings || [];
             
             if (gameState.camera) {
                 this.camera = { ...gameState.camera };
@@ -566,7 +589,14 @@ class MobileVikingSettlementTycoon {
             }
             
             this.loadNearbyChunks();
-            this.restoreFogOfWar();
+            
+            // Restore fog of war data
+            if (gameState.fogOfWarData) {
+                this.restoreFogOfWarFromSave(gameState.fogOfWarData);
+            } else {
+                // Fallback to basic restoration
+                this.restoreFogOfWar();
+            }
             
             this.updateMobileResourceDisplay();
             this.updateMobilePopulationDisplay();
@@ -574,8 +604,69 @@ class MobileVikingSettlementTycoon {
             
             this.showMobileNotification('Game loaded!', 'success');
             return true;
+        } catch (error) {
+            console.error('Failed to load mobile game:', error);
+            this.showMobileNotification('Failed to load save!', 'error');
+            localStorage.removeItem('vikingSettlementMobile');
+            return false;
         }
-        return false;
+    }
+
+    validateSaveData(gameState) {
+        try {
+            // Check if required fields exist and are of correct type
+            if (typeof gameState.resources !== 'object' || gameState.resources === null) return false;
+            if (typeof gameState.population !== 'number') return false;
+            if (!Array.isArray(gameState.buildings)) return false;
+            if (typeof gameState.camera !== 'object' || gameState.camera === null) return false;
+            if (!Array.isArray(gameState.scouts)) return false;
+            if (typeof gameState.seed !== 'number') return false;
+            
+            // Validate resources
+            const requiredResources = ['food', 'wood', 'iron', 'gold'];
+            for (const resource of requiredResources) {
+                if (typeof gameState.resources[resource] !== 'number') return false;
+            }
+            
+            // Validate camera
+            if (typeof gameState.camera.x !== 'number' || 
+                typeof gameState.camera.y !== 'number' || 
+                typeof gameState.camera.scale !== 'number') return false;
+            
+            return true;
+        } catch (error) {
+            console.error('Mobile save data validation failed:', error);
+            return false;
+        }
+    }
+
+    restoreFogOfWarFromSave(fogOfWarData) {
+        try {
+            for (const [chunkKey, dataURL] of Object.entries(fogOfWarData)) {
+                // Create new image from saved data
+                const img = new Image();
+                img.onload = () => {
+                    // Get or create fog canvas for this chunk
+                    let fogData = this.fogOfWar.get(chunkKey);
+                    if (!fogData) {
+                        const [chunkX, chunkY] = chunkKey.split(',').map(Number);
+                        this.initializeChunkFogOfWar(chunkX, chunkY);
+                        fogData = this.fogOfWar.get(chunkKey);
+                    }
+                    
+                    if (fogData) {
+                        // Clear the canvas and draw the saved fog data
+                        fogData.ctx.clearRect(0, 0, this.chunkSize, this.chunkSize);
+                        fogData.ctx.drawImage(img, 0, 0);
+                    }
+                };
+                img.src = dataURL;
+            }
+        } catch (error) {
+            console.error('Failed to restore mobile fog of war:', error);
+            // Fallback to basic restoration
+            this.restoreFogOfWar();
+        }
     }
     
     getBuildingData(type) {
@@ -1570,25 +1661,33 @@ class MobileVikingSettlementTycoon {
     }
     
     resetGameProgress() {
-        this.resources = { food: 100, wood: 50, iron: 25, gold: 10 };
-        this.population = 5;
-        this.buildings = [];
-        this.camera = { x: 0, y: 0, scale: 1 };
-        this.scouts = [];
-        this.exploredAreas.clear();
-        this.revealAnimations = [];
-        this.loadedChunks.clear();
-        this.fogOfWar.clear();
-        this.seed = Math.random() * 10000;
-        
-        this.loadNearbyChunks();
-        this.spawnInitialScout();
-        
-        this.updateMobileResourceDisplay();
-        this.updateMobilePopulationDisplay();
-        this.updateMobileStatsDisplay();
-        
-        this.cancelMobilePlacement();
+        try {
+            this.resources = { food: 100, wood: 50, iron: 25, gold: 10 };
+            this.population = 5;
+            this.buildings = [];
+            this.camera = { x: 0, y: 0, scale: 1 };
+            this.scouts = [];
+            this.exploredAreas.clear();
+            this.revealAnimations = [];
+            this.loadedChunks.clear();
+            this.fogOfWar.clear();
+            this.seed = Math.random() * 10000;
+            
+            this.loadNearbyChunks();
+            this.spawnInitialScout();
+            
+            this.updateMobileResourceDisplay();
+            this.updateMobilePopulationDisplay();
+            this.updateMobileStatsDisplay();
+            
+            this.cancelMobilePlacement();
+            
+            // Clear mobile save data
+            localStorage.removeItem('vikingSettlementMobile');
+        } catch (error) {
+            console.error('Failed to reset mobile game:', error);
+            this.showMobileNotification('Reset failed, please refresh', 'error');
+        }
     }
     
     restoreFogOfWar() {
