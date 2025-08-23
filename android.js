@@ -1549,14 +1549,14 @@ class MobileVikingSettlementTycoon {
         for (let i = 0; i < rockCount; i++) {
             const rockX = x + (i % 2) * size/2 + Math.random() * size/2;
             const rockY = y + Math.floor(i / 2) * size/2 + Math.random() * size/2;
-            const rockHeight = Math.max(4, size / 4);
+            const rockSize = Math.max(2, Math.floor(size / 6));
             
             // Main rock formation
             ctx.beginPath();
             ctx.moveTo(rockX, rockY);
-            ctx.lineTo(rockX + size/8, rockY - rockHeight);
-            ctx.lineTo(rockX + size/4, rockY - rockHeight * 0.3);
-            ctx.lineTo(rockX + size/3, rockY);
+            ctx.lineTo(rockX + rockSize * 0.6, rockY - rockSize);
+            ctx.lineTo(rockX + rockSize, rockY - rockSize * 0.3);
+            ctx.lineTo(rockX + rockSize * 1.2, rockY);
             ctx.closePath();
             ctx.fill();
         }
@@ -1895,6 +1895,44 @@ class MobileVikingSettlementTycoon {
             ctx.fillStyle = '#ffffff';
             ctx.beginPath();
             ctx.arc(x + size * 0.7, y + size * 0.3, Math.max(1, size / 16), 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    
+    // Enhanced grass tile (missing function that needs to be added)
+    drawEnhancedGrassTile(ctx, x, y, size, detailNoise, moisture) {
+        // Grass color variation based on moisture and detail noise
+        const baseGreen = moisture > 0 ? '#4caf50' : '#7cb342';
+        const lightGreen = moisture > 0 ? '#66bb6a' : '#8bc34a';
+        const darkGreen = moisture > 0 ? '#388e3c' : '#689f38';
+        
+        // Create varied grass base
+        const gradient = ctx.createRadialGradient(x + size/2, y + size/2, 0, x + size/2, y + size/2, size);
+        gradient.addColorStop(0, lightGreen);
+        gradient.addColorStop(0.7, baseGreen);
+        gradient.addColorStop(1, darkGreen);
+        ctx.fillStyle = gradient;
+        ctx.fillRect(x, y, size, size);
+        
+        // Grass texture patches (mobile optimized)
+        ctx.globalAlpha = 0.6;
+        ctx.fillStyle = detailNoise > 0 ? lightGreen : darkGreen;
+        for (let i = 0; i < Math.max(4, Math.floor(size / 4)); i++) {
+            const patchX = x + Math.random() * size;
+            const patchY = y + Math.random() * size;
+            const patchSize = Math.max(1, Math.floor(size / 8));
+            ctx.fillRect(patchX, patchY, patchSize, patchSize);
+        }
+        ctx.globalAlpha = 1;
+        
+        // Varied flowers (mobile optimized)
+        if (moisture > 0.3 && Math.random() < 0.2) {
+            const colors = ['#ffeb3b', '#e91e63', '#9c27b0', '#ffffff'];
+            ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
+            const flowerX = x + size * 0.3 + Math.random() * size * 0.4;
+            const flowerY = y + size * 0.3 + Math.random() * size * 0.4;
+            ctx.beginPath();
+            ctx.arc(flowerX, flowerY, Math.max(1, size / 20), 0, Math.PI * 2);
             ctx.fill();
         }
     }
