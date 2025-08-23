@@ -1047,7 +1047,127 @@ class MobileVikingSettlementTycoon {
         });
     }
     
-    // Arctic biome tile renderers (imported from game.js)
+    drawEnhancedTerrainTile(ctx, tileType, x, y, size, noise, detailNoise, moisture) {
+        switch (tileType) {
+            // Basic terrain types
+            case 'grass':
+                this.drawEnhancedGrassTile(ctx, x, y, size, detailNoise, moisture);
+                break;
+            case 'snow':
+                this.drawEnhancedSnowTile(ctx, x, y, size, detailNoise);
+                break;
+            case 'water':
+            case 'shallow_water':
+                this.drawEnhancedWaterTile(ctx, x, y, size, '#1976d2', '#2196f3', '#64b5f6');
+                break;
+            case 'deep_fjord_water':
+                this.drawDeepFjordTile(ctx, x, y, size);
+                break;
+            case 'beach':
+                this.drawEnhancedBeachTile(ctx, x, y, size, moisture);
+                break;
+            case 'hills':
+                this.drawEnhancedHillsTile(ctx, x, y, size, detailNoise);
+                break;
+            case 'mountains':
+            case 'highland_mountains':
+                this.drawEnhancedMountainTile(ctx, x, y, size, detailNoise);
+                break;
+            
+            // Forest types
+            case 'conifer_forest':
+                this.drawConiferForestTile(ctx, x, y, size, detailNoise);
+                break;
+            case 'dense_conifer_forest':
+                this.drawDenseConiferTile(ctx, x, y, size, detailNoise);
+                break;
+            case 'deciduous_forest':
+                this.drawDeciduousForestTile(ctx, x, y, size, detailNoise);
+                break;
+            case 'mixed_forest':
+                this.drawMixedForestTile(ctx, x, y, size, detailNoise);
+                break;
+            case 'sparse_forest':
+                this.drawSparseForestTile(ctx, x, y, size, detailNoise);
+                break;
+            case 'alpine_forest':
+                this.drawAlpineForestTile(ctx, x, y, size, detailNoise);
+                break;
+            case 'mountain_forest':
+                this.drawMountainForestTile(ctx, x, y, size, detailNoise);
+                break;
+            case 'coastal_forest':
+                this.drawCoastalForestTile(ctx, x, y, size, detailNoise);
+                break;
+            
+            // Arctic biome
+            case 'arctic_ice':
+                this.drawArcticIceTile(ctx, x, y, size);
+                break;
+            case 'tundra_grass':
+                this.drawTundraGrassTile(ctx, x, y, size, detailNoise);
+                break;
+            
+            // Boreal biome
+            case 'boreal_lake':
+                this.drawBorealLakeTile(ctx, x, y, size);
+                break;
+            case 'wetland':
+                this.drawWetlandTile(ctx, x, y, size, moisture);
+                break;
+            case 'boreal_clearing':
+                this.drawBorealClearingTile(ctx, x, y, size, detailNoise);
+                break;
+            case 'rocky_terrain':
+                this.drawRockyTerrainTile(ctx, x, y, size, detailNoise);
+                break;
+            
+            // Coastal biome
+            case 'rocky_shore':
+                this.drawRockyShoreTile(ctx, x, y, size, detailNoise);
+                break;
+            case 'sea_cliff':
+                this.drawSeaCliffTile(ctx, x, y, size, detailNoise);
+                break;
+            case 'coastal_grass':
+                this.drawCoastalGrassTile(ctx, x, y, size, moisture);
+                break;
+            
+            // Mountain biome
+            case 'snow_peak':
+                this.drawSnowPeakTile(ctx, x, y, size, detailNoise);
+                break;
+            case 'rocky_peak':
+                this.drawRockyPeakTile(ctx, x, y, size, detailNoise);
+                break;
+            case 'rocky_slope':
+                this.drawRockySlopeTile(ctx, x, y, size, detailNoise);
+                break;
+            case 'alpine_meadow':
+                this.drawAlpineMeadowTile(ctx, x, y, size, detailNoise);
+                break;
+            case 'mountain_stream':
+                this.drawMountainStreamTile(ctx, x, y, size);
+                break;
+            
+            // Temperate biome
+            case 'river':
+                this.drawRiverTile(ctx, x, y, size);
+                break;
+            case 'dry_grassland':
+                this.drawDryGrasslandTile(ctx, x, y, size, detailNoise);
+                break;
+            case 'flowering_meadow':
+                this.drawFloweringMeadowTile(ctx, x, y, size, detailNoise);
+                break;
+            
+            // Default fallback
+            default:
+                this.drawEnhancedGrassTile(ctx, x, y, size, detailNoise, moisture);
+                break;
+        }
+    }
+    
     drawArcticIceTile(ctx, x, y, size) {
         const gradient = ctx.createRadialGradient(x + size/2, y + size/2, 0, x + size/2, y + size/2, size);
         gradient.addColorStop(0, '#e8f4fd');
@@ -1164,7 +1284,7 @@ class MobileVikingSettlementTycoon {
         const treeCount = Math.max(4, Math.floor(size / 4));
         for (let i = 0; i < treeCount; i++) {
             const treeX = x + (i % 3) * size/3 + Math.random() * size/4;
-            const treeY = y + Math.floor(i / 3) * size/4 + Math.random() * size/4;
+            const treeY = y + Math.floor(i / 3) * size/2 + Math.random() * size/3;
             const treeHeight = Math.max(3, size / 6);
             
             ctx.fillStyle = '#654321';
@@ -1207,7 +1327,7 @@ class MobileVikingSettlementTycoon {
                 // Deciduous
                 ctx.fillStyle = '#32cd32';
                 ctx.beginPath();
-                ctx.arc(treeX, treeY - treeHeight/2, Math.max(3, size / 8), 0, Math.PI * 2);
+                ctx.arc(treeX, treeY - treeHeight/2, Math.max(2, size / 10), 0, Math.PI * 2);
                 ctx.fill();
             }
         }
@@ -1364,7 +1484,7 @@ class MobileVikingSettlementTycoon {
     }
     
     drawCoastalGrassTile(ctx, x, y, size, moisture) {
-        const grassColor = moisture > 0.6 ? '#32cd32' : '#9acd32';
+        const grassColor = moisture > 0 ? '#32cd32' : '#9acd32';
         ctx.fillStyle = grassColor;
         ctx.fillRect(x, y, size, size);
         
@@ -1448,28 +1568,30 @@ class MobileVikingSettlementTycoon {
         // Alpine trees (mobile optimized)
         const treeCount = Math.max(2, Math.floor(size / 8));
         for (let i = 0; i < treeCount; i++) {
-            const treeX = x + (i % 2) * size/2 + Math.random() * size/3;
-            const treeY = y + Math.floor(i / 2) * size/2 + Math.random() * size/3;
-            const treeHeight = Math.max(3, size / 6);
+            const treeX = x + (i % 3) * size/3 + Math.random() * size/3;
+            const treeY = y + Math.floor(i / 3) * size/3 + Math.random() * size/3;
+            const treeSize = Math.max(2, Math.floor(size / 8));
             
-            ctx.fillStyle = '#654321';
-            ctx.fillRect(treeX - 1, treeY, 1, treeHeight);
-            
-            ctx.fillStyle = '#006400';
+            // Tree shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.2)';
             ctx.beginPath();
-            ctx.moveTo(treeX, treeY - treeHeight * 1.7);
-            ctx.lineTo(treeX - size/10, treeY - 1);
-            ctx.lineTo(treeX + size/10, treeY - 1);
-            ctx.closePath();
+            ctx.arc(treeX + 1, treeY + 1, treeSize * 0.8, 0, Math.PI * 2);
             ctx.fill();
-        }
-        
-        // Alpine flowers
-        if (detailNoise > 0.3) {
-            const colors = ['#ff69b4', '#9370db', '#00bfff'];
-            ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
+            
+            // Tree trunk
+            ctx.fillStyle = '#3e2723';
+            ctx.fillRect(treeX - 1, treeY, 1, treeSize * 0.4);
+            
+            // Tree canopy
+            ctx.fillStyle = '#0d3f0f';
             ctx.beginPath();
-            ctx.arc(x + size * 0.7, y + size * 0.8, Math.max(1, size / 16), 0, Math.PI * 2);
+            ctx.arc(treeX, treeY - treeSize * 0.2, treeSize, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Canopy highlight
+            ctx.fillStyle = '#4caf50';
+            ctx.beginPath();
+            ctx.arc(treeX - 1, treeY - treeSize * 0.4, treeSize * 0.6, 0, Math.PI * 2);
             ctx.fill();
         }
     }
@@ -1933,41 +2055,6 @@ class MobileVikingSettlementTycoon {
             ctx.arc(x + size * 0.7, y + size * 0.15, Math.max(1, size / 12), 0, Math.PI);
             ctx.fill();
         }
-    }
-    
-    // Enhanced snow tile (imported from game.js)
-    drawEnhancedSnowTile(ctx, x, y, size, detailNoise) {
-        // Snow base with subtle variations
-        const gradient = ctx.createRadialGradient(x + size/2, y + size/2, 0, x + size/2, y + size/2, size);
-        gradient.addColorStop(0, '#ffffff');
-        gradient.addColorStop(0.6, '#f5f5f5');
-        gradient.addColorStop(1, '#e0e0e0');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(x, y, size, size);
-        
-        // Snow texture with sparkles (mobile optimized)
-        ctx.fillStyle = '#ffffff';
-        const sparkleCount = Math.max(8, Math.floor(size * 0.9));
-        for (let i = 0; i < sparkleCount; i++) {
-            const sparkleX = x + Math.random() * size;
-            const sparkleY = y + Math.random() * size;
-            const sparkleSize = Math.random() * Math.max(1, size / 16);
-            ctx.beginPath();
-            ctx.arc(sparkleX, sparkleY, sparkleSize, 0, Math.PI * 2);
-            ctx.fill();
-        }
-        
-        // Snow drifts
-        ctx.fillStyle = '#f0f0f0';
-        ctx.globalAlpha = 0.6;
-        for (let i = 0; i < 2; i++) {
-            const driftX = x + Math.random() * size;
-            const driftY = y + Math.random() * size;
-            ctx.beginPath();
-            ctx.ellipse(driftX, driftY, Math.max(3, size / 5), Math.max(2, size / 8), Math.random() * Math.PI, 0, Math.PI * 2);
-            ctx.fill();
-        }
-        ctx.globalAlpha = 1;
     }
     
     drawTerrainDetails(ctx, tileType, x, y, size, detailNoise) {
