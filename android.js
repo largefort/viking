@@ -19,11 +19,6 @@ class MobileVikingSettlementTycoon {
         this.selectedBuilding = null;
         this.placementMode = false;
         
-        // Day/Night cycle (mobile optimized)
-        this.gameTime = 0;
-        this.dayLength = 90; // Shorter cycle for mobile - 1.5 minutes
-        this.timeSpeed = 1.2; // Slightly faster for mobile
-        
         // Mobile-specific properties
         this.activeTab = 'buildings';
         // Enhanced touch handling for zoom
@@ -1054,71 +1049,26 @@ class MobileVikingSettlementTycoon {
     
     drawEnhancedTerrainTile(ctx, tileType, x, y, size, noise, detailNoise, moisture) {
         switch (tileType) {
-            // Basic terrain types
-            case 'grass':
-                this.drawEnhancedGrassTile(ctx, x, y, size, detailNoise, moisture);
-                break;
-            case 'snow':
-                this.drawEnhancedSnowTile(ctx, x, y, size, detailNoise);
-                break;
-            case 'water':
-            case 'shallow_water':
-                this.drawEnhancedWaterTile(ctx, x, y, size, '#1976d2', '#2196f3', '#64b5f6');
-                break;
-            case 'deep_fjord_water':
-                this.drawDeepFjordTile(ctx, x, y, size);
-                break;
-            case 'beach':
-                this.drawEnhancedBeachTile(ctx, x, y, size, moisture);
-                break;
-            case 'hills':
-                this.drawEnhancedHillsTile(ctx, x, y, size, detailNoise);
-                break;
-            case 'mountains':
-            case 'highland_mountains':
-                this.drawEnhancedMountainTile(ctx, x, y, size, detailNoise);
-                break;
-            
-            // Forest types
-            case 'conifer_forest':
-                this.drawConiferForestTile(ctx, x, y, size, detailNoise);
-                break;
-            case 'dense_conifer_forest':
-                this.drawDenseConiferTile(ctx, x, y, size, detailNoise);
-                break;
-            case 'deciduous_forest':
-                this.drawDeciduousForestTile(ctx, x, y, size, detailNoise);
-                break;
-            case 'mixed_forest':
-                this.drawMixedForestTile(ctx, x, y, size, detailNoise);
-                break;
-            case 'sparse_forest':
-                this.drawSparseForestTile(ctx, x, y, size, detailNoise);
-                break;
-            case 'alpine_forest':
-                this.drawAlpineForestTile(ctx, x, y, size, detailNoise);
-                break;
-            case 'mountain_forest':
-                this.drawMountainForestTile(ctx, x, y, size, detailNoise);
-                break;
-            case 'coastal_forest':
-                this.drawCoastalForestTile(ctx, x, y, size, detailNoise);
-                break;
-            
-            // Arctic biome
             case 'arctic_ice':
                 this.drawArcticIceTile(ctx, x, y, size);
                 break;
             case 'tundra_grass':
                 this.drawTundraGrassTile(ctx, x, y, size, detailNoise);
                 break;
-            
-            // Boreal biome
+            case 'sparse_forest':
+                this.drawSparseForestTile(ctx, x, y, size, detailNoise);
+                break;
             case 'boreal_lake':
                 this.drawBorealLakeTile(ctx, x, y, size);
                 break;
             case 'wetland':
                 this.drawWetlandTile(ctx, x, y, size, moisture);
+                break;
+            case 'dense_conifer_forest':
+                this.drawDenseConiferTile(ctx, x, y, size, detailNoise);
+                break;
+            case 'conifer_forest':
+                this.drawConiferForestTile(ctx, x, y, size, detailNoise);
                 break;
             case 'boreal_clearing':
                 this.drawBorealClearingTile(ctx, x, y, size, detailNoise);
@@ -1126,10 +1076,17 @@ class MobileVikingSettlementTycoon {
             case 'rocky_terrain':
                 this.drawRockyTerrainTile(ctx, x, y, size, detailNoise);
                 break;
-            
-            // Coastal biome
+            case 'deep_fjord_water':
+                this.drawDeepFjordTile(ctx, x, y, size);
+                break;
+            case 'shallow_water':
+                this.drawEnhancedWaterTile(ctx, x, y, size, '#4682b4', '#6495ed', '#87ceeb');
+                break;
             case 'rocky_shore':
                 this.drawRockyShoreTile(ctx, x, y, size, detailNoise);
+                break;
+            case 'coastal_forest':
+                this.drawCoastalForestTile(ctx, x, y, size, detailNoise);
                 break;
             case 'sea_cliff':
                 this.drawSeaCliffTile(ctx, x, y, size, detailNoise);
@@ -1137,13 +1094,17 @@ class MobileVikingSettlementTycoon {
             case 'coastal_grass':
                 this.drawCoastalGrassTile(ctx, x, y, size, moisture);
                 break;
-            
-            // Mountain biome
+            case 'beach':
+                this.drawEnhancedBeachTile(ctx, x, y, size, moisture);
+                break;
             case 'snow_peak':
                 this.drawSnowPeakTile(ctx, x, y, size, detailNoise);
                 break;
             case 'rocky_peak':
                 this.drawRockyPeakTile(ctx, x, y, size, detailNoise);
+                break;
+            case 'alpine_forest':
+                this.drawAlpineForestTile(ctx, x, y, size, detailNoise);
                 break;
             case 'rocky_slope':
                 this.drawRockySlopeTile(ctx, x, y, size, detailNoise);
@@ -1151,13 +1112,23 @@ class MobileVikingSettlementTycoon {
             case 'alpine_meadow':
                 this.drawAlpineMeadowTile(ctx, x, y, size, detailNoise);
                 break;
+            case 'mountain_forest':
+                this.drawMountainForestTile(ctx, x, y, size, detailNoise);
+                break;
             case 'mountain_stream':
                 this.drawMountainStreamTile(ctx, x, y, size);
                 break;
-            
-            // Temperate biome
+            case 'hills':
+                this.drawEnhancedHillsTile(ctx, x, y, size, detailNoise);
+                break;
             case 'river':
                 this.drawRiverTile(ctx, x, y, size);
+                break;
+            case 'deciduous_forest':
+                this.drawDeciduousForestTile(ctx, x, y, size, detailNoise);
+                break;
+            case 'mixed_forest':
+                this.drawMixedForestTile(ctx, x, y, size, detailNoise);
                 break;
             case 'dry_grassland':
                 this.drawDryGrasslandTile(ctx, x, y, size, detailNoise);
@@ -1165,14 +1136,17 @@ class MobileVikingSettlementTycoon {
             case 'flowering_meadow':
                 this.drawFloweringMeadowTile(ctx, x, y, size, detailNoise);
                 break;
-            
-            // Default fallback
+            case 'snow':
+                this.drawEnhancedSnowTile(ctx, x, y, size, detailNoise);
+                break;
+            case 'grass':
             default:
                 this.drawEnhancedGrassTile(ctx, x, y, size, detailNoise, moisture);
                 break;
         }
     }
     
+    // Arctic biome tile renderers (imported from game.js)
     drawArcticIceTile(ctx, x, y, size) {
         const gradient = ctx.createRadialGradient(x + size/2, y + size/2, 0, x + size/2, y + size/2, size);
         gradient.addColorStop(0, '#e8f4fd');
@@ -1489,26 +1463,70 @@ class MobileVikingSettlementTycoon {
     }
     
     drawCoastalGrassTile(ctx, x, y, size, moisture) {
-        const grassColor = moisture > 0 ? '#32cd32' : '#9acd32';
-        ctx.fillStyle = grassColor;
+        const grassColor = moisture > 0 ? '#d4c27a' : '#f5e6a3';
+        const darkSand = moisture > 0 ? '#c4b26a' : '#e6d28a';
+        
+        const gradient = ctx.createLinearGradient(x, y, x + size, y + size);
+        gradient.addColorStop(0, grassColor);
+        gradient.addColorStop(1, darkSand);
+        ctx.fillStyle = gradient;
         ctx.fillRect(x, y, size, size);
         
-        // Salt-resistant coastal grass (mobile optimized)
-        ctx.fillStyle = '#6b8e23';
-        const grassCount = Math.max(8, Math.floor(size * 0.9));
-        for (let i = 0; i < grassCount; i++) {
-            const grassX = x + Math.random() * size;
-            const grassY = y + Math.random() * size;
-            ctx.fillRect(grassX, grassY, 1, Math.max(1, size / 8));
+        // Sand texture (mobile optimized)
+        ctx.fillStyle = darkSand;
+        const dotCount = Math.max(12, Math.floor(size * 0.8));
+        for (let i = 0; i < dotCount; i++) {
+            const dotX = x + Math.random() * size;
+            const dotY = y + Math.random() * size;
+            const radius = 0.5 + Math.random();
+            ctx.beginPath();
+            ctx.arc(dotX, dotY, radius, 0, Math.PI * 2);
+            ctx.fill();
         }
         
-        // Salt crystals
-        ctx.fillStyle = '#ffffff';
-        for (let i = 0; i < Math.max(2, Math.floor(size / 6)); i++) {
-            const saltX = x + Math.random() * size;
-            const saltY = y + Math.random() * size;
+        // Occasional shells or debris
+        if (Math.random() < 0.1) {
+            ctx.fillStyle = '#ffffff';
             ctx.beginPath();
-            ctx.arc(saltX, saltY, 0.5, 0, Math.PI * 2);
+            ctx.arc(x + size * 0.7, y + size * 0.3, Math.max(1, size / 16), 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    
+    // Enhanced grass tile (missing function that needs to be added)
+    drawEnhancedGrassTile(ctx, x, y, size, detailNoise, moisture) {
+        // Grass color variation based on moisture and detail noise
+        const baseGreen = moisture > 0 ? '#4caf50' : '#7cb342';
+        const lightGreen = moisture > 0 ? '#66bb6a' : '#8bc34a';
+        const darkGreen = moisture > 0 ? '#388e3c' : '#689f38';
+        
+        // Create varied grass base
+        const gradient = ctx.createRadialGradient(x + size/2, y + size/2, 0, x + size/2, y + size/2, size);
+        gradient.addColorStop(0, lightGreen);
+        gradient.addColorStop(0.7, baseGreen);
+        gradient.addColorStop(1, darkGreen);
+        ctx.fillStyle = gradient;
+        ctx.fillRect(x, y, size, size);
+        
+        // Grass texture patches (mobile optimized)
+        ctx.globalAlpha = 0.6;
+        ctx.fillStyle = detailNoise > 0 ? lightGreen : darkGreen;
+        for (let i = 0; i < Math.max(4, Math.floor(size / 4)); i++) {
+            const patchX = x + Math.random() * size;
+            const patchY = y + Math.random() * size;
+            const patchSize = Math.max(1, Math.floor(size / 8));
+            ctx.fillRect(patchX, patchY, patchSize, patchSize);
+        }
+        ctx.globalAlpha = 1;
+        
+        // Varied flowers (mobile optimized)
+        if (moisture > 0.3 && Math.random() < 0.2) {
+            const colors = ['#ffeb3b', '#e91e63', '#9c27b0', '#ffffff'];
+            ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
+            const flowerX = x + size * 0.3 + Math.random() * size * 0.4;
+            const flowerY = y + size * 0.3 + Math.random() * size * 0.4;
+            ctx.beginPath();
+            ctx.arc(flowerX, flowerY, Math.max(1, size / 20), 0, Math.PI * 2);
             ctx.fill();
         }
     }
@@ -1630,6 +1648,41 @@ class MobileVikingSettlementTycoon {
             ctx.arc(x + size * 0.7, y + size * 0.15, Math.max(1, size / 12), 0, Math.PI);
             ctx.fill();
         }
+    }
+    
+    // Enhanced snow tile (imported from game.js)
+    drawEnhancedSnowTile(ctx, x, y, size, detailNoise) {
+        // Snow base with subtle variations
+        const gradient = ctx.createRadialGradient(x + size/2, y + size/2, 0, x + size/2, y + size/2, size);
+        gradient.addColorStop(0, '#ffffff');
+        gradient.addColorStop(0.6, '#f5f5f5');
+        gradient.addColorStop(1, '#e0e0e0');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(x, y, size, size);
+        
+        // Snow texture with sparkles (mobile optimized)
+        ctx.fillStyle = '#ffffff';
+        const sparkleCount = Math.max(8, Math.floor(size * 0.9));
+        for (let i = 0; i < sparkleCount; i++) {
+            const sparkleX = x + Math.random() * size;
+            const sparkleY = y + Math.random() * size;
+            const sparkleSize = Math.random() * Math.max(1, size / 16);
+            ctx.beginPath();
+            ctx.arc(sparkleX, sparkleY, sparkleSize, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Snow drifts
+        ctx.fillStyle = '#f0f0f0';
+        ctx.globalAlpha = 0.6;
+        for (let i = 0; i < 2; i++) {
+            const driftX = x + Math.random() * size;
+            const driftY = y + Math.random() * size;
+            ctx.beginPath();
+            ctx.ellipse(driftX, driftY, Math.max(3, size / 5), Math.max(2, size / 8), Math.random() * Math.PI, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.globalAlpha = 1;
     }
     
     drawTerrainDetails(ctx, tileType, x, y, size, detailNoise) {
@@ -1760,146 +1813,7 @@ class MobileVikingSettlementTycoon {
         }
     }
     
-    getDayNightInfo() {
-        const cycleProgress = (this.gameTime % this.dayLength) / this.dayLength;
-        const sunAngle = cycleProgress * Math.PI * 2 - Math.PI;
-        
-        let phase = 'day';
-        let lightLevel = 1.0;
-        
-        if (cycleProgress < 0.25) {
-            phase = 'night';
-            lightLevel = 0.4; // Slightly brighter for mobile visibility
-        } else if (cycleProgress < 0.35) {
-            phase = 'dawn';
-            lightLevel = 0.6 + (cycleProgress - 0.25) * 4;
-        } else if (cycleProgress < 0.65) {
-            phase = 'day';
-            lightLevel = 1.0;
-        } else if (cycleProgress < 0.75) {
-            phase = 'dusk';
-            lightLevel = 1.0 - (cycleProgress - 0.65) * 4;
-        } else {
-            phase = 'night';
-            lightLevel = 0.6 - (cycleProgress - 0.75) * 0.8;
-        }
-        
-        const sunX = Math.cos(sunAngle);
-        const sunY = Math.sin(sunAngle);
-        
-        let ambientColor, sunColor;
-        switch (phase) {
-            case 'dawn':
-                ambientColor = `rgba(255, 180, 120, ${lightLevel * 0.08})`;
-                sunColor = `rgba(255, 200, 100, ${lightLevel * 0.25})`;
-                break;
-            case 'day':
-                ambientColor = `rgba(255, 255, 220, ${lightLevel * 0.04})`;
-                sunColor = `rgba(255, 255, 200, ${lightLevel * 0.15})`;
-                break;
-            case 'dusk':
-                ambientColor = `rgba(255, 120, 80, ${lightLevel * 0.12})`;
-                sunColor = `rgba(255, 150, 80, ${lightLevel * 0.35})`;
-                break;
-            case 'night':
-                ambientColor = `rgba(80, 80, 150, ${0.15 - lightLevel * 0.08})`;
-                sunColor = `rgba(180, 180, 255, 0.08)`;
-                break;
-            default:
-                ambientColor = `rgba(255, 255, 255, 0.04)`;
-                sunColor = `rgba(255, 255, 255, 0.08)`;
-        }
-        
-        return {
-            phase,
-            lightLevel,
-            cycleProgress,
-            sunAngle,
-            sunX,
-            sunY,
-            ambientColor,
-            sunColor
-        };
-    }
-    
-    renderSunRays(dayNightInfo) {
-        if (dayNightInfo.phase === 'night') return;
-        
-        const { sunX, sunY, lightLevel, sunColor } = dayNightInfo;
-        
-        const screenCenterX = this.canvas.width / 2;
-        const screenCenterY = this.canvas.height / 2;
-        const sunScreenX = screenCenterX + sunX * this.canvas.width * 0.3;
-        const sunScreenY = screenCenterY - Math.abs(sunY) * this.canvas.height * 0.25;
-        
-        if (sunY < 0) return;
-        
-        this.ctx.save();
-        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-        
-        // Simplified sun rays for mobile performance
-        this.ctx.globalCompositeOperation = 'screen';
-        this.ctx.globalAlpha = lightLevel * 0.08;
-        
-        const rayCount = 6; // Fewer rays for mobile
-        const rayLength = Math.min(this.canvas.width, this.canvas.height) * 0.5;
-        
-        for (let i = 0; i < rayCount; i++) {
-            const angle = (i / rayCount) * Math.PI * 2;
-            const rayEndX = sunScreenX + Math.cos(angle) * rayLength;
-            const rayEndY = sunScreenY + Math.sin(angle) * rayLength;
-            
-            const gradient = this.ctx.createLinearGradient(sunScreenX, sunScreenY, rayEndX, rayEndY);
-            gradient.addColorStop(0, sunColor);
-            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-            
-            this.ctx.strokeStyle = gradient;
-            this.ctx.lineWidth = 2;
-            this.ctx.beginPath();
-            this.ctx.moveTo(sunScreenX, sunScreenY);
-            this.ctx.lineTo(rayEndX, rayEndY);
-            this.ctx.stroke();
-        }
-        
-        // Simplified sun disc
-        const sunSize = 25 * lightLevel;
-        const sunGradient = this.ctx.createRadialGradient(sunScreenX, sunScreenY, 0, sunScreenX, sunScreenY, sunSize);
-        sunGradient.addColorStop(0, `rgba(255, 255, 150, ${lightLevel * 0.6})`);
-        sunGradient.addColorStop(0.7, `rgba(255, 200, 100, ${lightLevel * 0.3})`);
-        sunGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-        
-        this.ctx.fillStyle = sunGradient;
-        this.ctx.beginPath();
-        this.ctx.arc(sunScreenX, sunScreenY, sunSize, 0, Math.PI * 2);
-        this.ctx.fill();
-        
-        this.ctx.restore();
-    }
-    
-    applyDayNightLighting(dayNightInfo) {
-        this.ctx.save();
-        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-        
-        const { lightLevel, ambientColor, phase } = dayNightInfo;
-        
-        // Lighter night overlay for mobile visibility
-        if (phase === 'night') {
-            this.ctx.globalCompositeOperation = 'multiply';
-            this.ctx.fillStyle = `rgba(60, 60, 120, ${0.8 - lightLevel})`;
-            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        } else if (phase === 'dusk' || phase === 'dawn') {
-            this.ctx.globalCompositeOperation = 'overlay';
-            this.ctx.fillStyle = ambientColor;
-            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        }
-        
-        this.ctx.restore();
-    }
-
     update(deltaTime) {
-        // Update game time for day/night cycle
-        this.gameTime += (deltaTime / 1000) * this.timeSpeed;
-        
         this.loadNearbyChunks();
         
         const now = Date.now();
@@ -1924,61 +1838,6 @@ class MobileVikingSettlementTycoon {
         
         this.updateMobileResourceDisplay();
         this.updateMobilePopulationDisplay();
-    }
-
-    render() {
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        
-        const dayNightInfo = this.getDayNightInfo();
-        
-        this.ctx.save();
-        this.ctx.scale(this.camera.scale, this.camera.scale);
-        this.ctx.translate(-this.camera.x, -this.camera.y);
-        
-        this.renderTerrain();
-        this.renderBuildings();
-        this.renderScouts();
-        this.renderFogOfWar();
-        
-        this.ctx.restore();
-        
-        // Apply day/night lighting
-        this.applyDayNightLighting(dayNightInfo);
-        
-        // Render sun rays
-        this.renderSunRays(dayNightInfo);
-        
-        // Mobile time display in status bar
-        this.renderMobileTimeDisplay(dayNightInfo);
-    }
-    
-    renderMobileTimeDisplay(dayNightInfo) {
-        const timePercent = (this.gameTime % this.dayLength) / this.dayLength;
-        
-        let timeString = '';
-        if (timePercent < 0.25) {
-            const nightProgress = timePercent / 0.25;
-            const hour = Math.floor(21 + nightProgress * 9) % 24;
-            timeString = `${hour.toString().padStart(2, '0')}:00`;
-        } else if (timePercent < 0.5) {
-            const morningProgress = (timePercent - 0.25) / 0.25;
-            const hour = Math.floor(6 + morningProgress * 6);
-            timeString = `${hour.toString().padStart(2, '0')}:00`;
-        } else if (timePercent < 0.75) {
-            const dayProgress = (timePercent - 0.5) / 0.25;
-            const hour = Math.floor(12 + dayProgress * 6);
-            timeString = `${hour.toString().padStart(2, '0')}:00`;
-        } else {
-            const eveningProgress = (timePercent - 0.75) / 0.25;
-            const hour = Math.floor(18 + eveningProgress * 3);
-            timeString = `${hour.toString().padStart(2, '0')}:00`;
-        }
-        
-        // Update DOM element for mobile time display
-        const timeElement = document.getElementById('mobileTime');
-        if (timeElement) {
-            timeElement.textContent = `${dayNightInfo.phase} ${timeString}`;
-        }
     }
     
     updateScouts(deltaTime) {
@@ -2047,6 +1906,21 @@ class MobileVikingSettlementTycoon {
     
     easeOutQuad(t) {
         return 1 - (1 - t) * (1 - t);
+    }
+    
+    render() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        this.ctx.save();
+        this.ctx.scale(this.camera.scale, this.camera.scale);
+        this.ctx.translate(-this.camera.x, -this.camera.y);
+        
+        this.renderTerrain();
+        this.renderBuildings();
+        this.renderScouts();
+        this.renderFogOfWar();
+        
+        this.ctx.restore();
     }
     
     renderTerrain() {
