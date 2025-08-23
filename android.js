@@ -19,6 +19,11 @@ class MobileVikingSettlementTycoon {
         this.selectedBuilding = null;
         this.placementMode = false;
         
+        // Day/Night cycle (mobile optimized)
+        this.gameTime = 0;
+        this.dayLength = 90; // Shorter cycle for mobile - 1.5 minutes
+        this.timeSpeed = 1.2; // Slightly faster for mobile
+        
         // Mobile-specific properties
         this.activeTab = 'buildings';
         // Enhanced touch handling for zoom
@@ -1508,436 +1513,6 @@ class MobileVikingSettlementTycoon {
         }
     }
     
-    // Mountain biome tile renderers (imported from game.js)
-    drawSnowPeakTile(ctx, x, y, size, detailNoise) {
-        ctx.fillStyle = '#fffafa';
-        ctx.fillRect(x, y, size, size);
-        
-        // Mountain peak shape
-        ctx.fillStyle = '#f0f8ff';
-        ctx.beginPath();
-        ctx.moveTo(x + size/2, y);
-        ctx.lineTo(x, y + size);
-        ctx.lineTo(x + size, y + size);
-        ctx.closePath();
-        ctx.fill();
-        
-        // Snow drifts (mobile optimized)
-        ctx.fillStyle = '#ffffff';
-        const driftCount = Math.max(4, Math.floor(size / 4));
-        for (let i = 0; i < driftCount; i++) {
-            const driftX = x + Math.random() * size;
-            const driftY = y + Math.random() * size;
-            ctx.beginPath();
-            ctx.ellipse(driftX, driftY, Math.max(2, size / 8), Math.max(1, size / 16), Math.random() * Math.PI, 0, Math.PI * 2);
-            ctx.fill();
-        }
-    }
-    
-    drawRockyPeakTile(ctx, x, y, size, detailNoise) {
-        const gradient = ctx.createLinearGradient(x, y, x, y + size);
-        gradient.addColorStop(0, '#dcdcdc');
-        gradient.addColorStop(0.5, '#a9a9a9');
-        gradient.addColorStop(1, '#696969');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(x, y, size, size);
-        
-        // Rocky peak formations (mobile optimized)
-        ctx.fillStyle = '#2f4f4f';
-        const rockCount = Math.max(2, Math.floor(size / 8));
-        for (let i = 0; i < rockCount; i++) {
-            const rockX = x + (i % 2) * size/2 + Math.random() * size/2;
-            const rockY = y + Math.floor(i / 2) * size/2 + Math.random() * size/2;
-            const rockSize = Math.max(2, Math.floor(size / 6));
-            
-            // Main rock formation
-            ctx.beginPath();
-            ctx.moveTo(rockX, rockY);
-            ctx.lineTo(rockX + rockSize * 0.6, rockY - rockSize);
-            ctx.lineTo(rockX + rockSize, rockY - rockSize * 0.3);
-            ctx.lineTo(rockX + rockSize * 1.2, rockY);
-            ctx.closePath();
-            ctx.fill();
-        }
-    }
-    
-    drawAlpineForestTile(ctx, x, y, size, detailNoise) {
-        ctx.fillStyle = '#2f4f2f';
-        ctx.fillRect(x, y, size, size);
-        
-        // Alpine trees (mobile optimized)
-        const treeCount = Math.max(2, Math.floor(size / 8));
-        for (let i = 0; i < treeCount; i++) {
-            const treeX = x + (i % 3) * size/3 + Math.random() * size/3;
-            const treeY = y + Math.floor(i / 3) * size/3 + Math.random() * size/3;
-            const treeSize = Math.max(2, Math.floor(size / 8));
-            
-            // Tree shadow
-            ctx.fillStyle = 'rgba(0,0,0,0.2)';
-            ctx.beginPath();
-            ctx.arc(treeX + 1, treeY + 1, treeSize * 0.8, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // Tree trunk
-            ctx.fillStyle = '#3e2723';
-            ctx.fillRect(treeX - 1, treeY, 1, treeSize * 0.4);
-            
-            // Tree canopy
-            ctx.fillStyle = '#0d3f0f';
-            ctx.beginPath();
-            ctx.arc(treeX, treeY - treeSize * 0.2, treeSize, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // Canopy highlight
-            ctx.fillStyle = '#4caf50';
-            ctx.beginPath();
-            ctx.arc(treeX - 1, treeY - treeSize * 0.4, treeSize * 0.6, 0, Math.PI * 2);
-            ctx.fill();
-        }
-    }
-    
-    drawRockySlopeTile(ctx, x, y, size, detailNoise) {
-        ctx.fillStyle = '#a9a9a9';
-        ctx.fillRect(x, y, size, size);
-        
-        // Sloped rocky terrain (mobile optimized)
-        ctx.fillStyle = '#696969';
-        const rockCount = Math.max(3, Math.floor(size / 5));
-        for (let i = 0; i < rockCount; i++) {
-            const rockX = x + Math.random() * size;
-            const rockY = y + Math.random() * size;
-            const rockSize = Math.max(1, Math.floor(size / 8));
-            ctx.beginPath();
-            ctx.ellipse(rockX, rockY, rockSize, rockSize/2, Math.PI/4, 0, Math.PI * 2);
-            ctx.fill();
-        }
-        
-        // Scree (loose rock)
-        ctx.fillStyle = '#778899';
-        const screeCount = Math.max(5, Math.floor(size / 3));
-        for (let i = 0; i < screeCount; i++) {
-            const screeX = x + Math.random() * size;
-            const screeY = y + Math.random() * size;
-            ctx.beginPath();
-            ctx.arc(screeX, screeY, 0.5, 0, Math.PI * 2);
-            ctx.fill();
-        }
-    }
-    
-    drawAlpineMeadowTile(ctx, x, y, size, detailNoise) {
-        ctx.fillStyle = '#adff2f';
-        ctx.fillRect(x, y, size, size);
-        
-        // Alpine grass (mobile optimized)
-        ctx.fillStyle = '#7cfc00';
-        const grassCount = Math.max(10, Math.floor(size * 1.25));
-        for (let i = 0; i < grassCount; i++) {
-            const grassX = x + Math.random() * size;
-            const grassY = y + Math.random() * size;
-            ctx.fillRect(grassX, grassY, 1, 1);
-        }
-        
-        // Mountain flowers
-        const flowers = ['#ff1493', '#ffd700', '#ff69b4', '#dda0dd', '#00bfff'];
-        const flowerCount = Math.max(3, Math.floor(size / 5));
-        for (let i = 0; i < flowerCount; i++) {
-            ctx.fillStyle = flowers[Math.floor(Math.random() * flowers.length)];
-            const flowerX = x + Math.random() * size;
-            const flowerY = y + Math.random() * size;
-            ctx.beginPath();
-            ctx.arc(flowerX, flowerY, Math.max(1, size / 20), 0, Math.PI * 2);
-            ctx.fill();
-        }
-    }
-    
-    drawMountainForestTile(ctx, x, y, size, detailNoise) {
-        ctx.fillStyle = '#228b22';
-        ctx.fillRect(x, y, size, size);
-        
-        // Mountain forest (mobile optimized)
-        const treeCount = Math.max(2, Math.floor(size / 8));
-        for (let i = 0; i < treeCount; i++) {
-            const treeX = x + (i % 2) * size/2 + Math.random() * size/3;
-            const treeY = y + Math.floor(i / 2) * size/2 + Math.random() * size/3;
-            const treeHeight = Math.max(4, size / 4);
-            
-            ctx.fillStyle = '#8b4513';
-            ctx.fillRect(treeX - 1, treeY, 1, treeHeight);
-            
-            if (Math.random() > 0.5) {
-                // Conifer
-                ctx.fillStyle = '#006400';
-                ctx.beginPath();
-                ctx.moveTo(treeX, treeY - treeHeight * 1.5);
-                ctx.lineTo(treeX - size/10, treeY - 1);
-                ctx.lineTo(treeX + size/10, treeY - 1);
-                ctx.closePath();
-                ctx.fill();
-            } else {
-                // Deciduous
-                ctx.fillStyle = '#32cd32';
-                ctx.beginPath();
-                ctx.arc(treeX, treeY - treeHeight/2, Math.max(2, size / 10), 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
-    }
-    
-    drawMountainStreamTile(ctx, x, y, size) {
-        ctx.fillStyle = '#228b22';
-        ctx.fillRect(x, y, size, size);
-        
-        // Mountain stream (mobile optimized)
-        ctx.strokeStyle = '#87ceeb';
-        ctx.lineWidth = Math.max(2, size / 8);
-        ctx.beginPath();
-        ctx.moveTo(x, y + size/4);
-        ctx.quadraticCurveTo(x + size/2, y + size/2, x + size, y + 3*size/4);
-        ctx.stroke();
-        
-        // Stream bed
-        ctx.strokeStyle = '#4682b4';
-        ctx.lineWidth = Math.max(1, size / 16);
-        ctx.beginPath();
-        ctx.moveTo(x, y + size/4);
-        ctx.quadraticCurveTo(x + size/2, y + size/2, x + size, y + 3*size/4);
-        ctx.stroke();
-        
-        // Stream rocks
-        ctx.fillStyle = '#696969';
-        const rockCount = Math.max(2, Math.floor(size / 8));
-        for (let i = 0; i < rockCount; i++) {
-            const rockX = x + Math.random() * size;
-            const rockY = y + Math.random() * size;
-            ctx.beginPath();
-            ctx.arc(rockX, rockY, Math.max(1, size / 16), 0, Math.PI * 2);
-            ctx.fill();
-        }
-    }
-    
-    // Temperate biome tile renderers (imported from game.js)
-    drawRiverTile(ctx, x, y, size) {
-        ctx.fillStyle = '#32cd32';
-        ctx.fillRect(x, y, size, size);
-        
-        // River water (mobile optimized)
-        ctx.strokeStyle = '#4169e1';
-        ctx.lineWidth = Math.max(3, size / 5);
-        ctx.beginPath();
-        ctx.moveTo(x, y + size/3);
-        ctx.quadraticCurveTo(x + size/2, y + 2*size/3, x + size, y + size/2);
-        ctx.stroke();
-        
-        // River banks
-        ctx.strokeStyle = '#8b4513';
-        ctx.lineWidth = Math.max(1, size / 16);
-        ctx.beginPath();
-        ctx.moveTo(x, y + size/3 - 2);
-        ctx.quadraticCurveTo(x + size/2, y + 2*size/3 - 2, x + size, y + size/2 - 2);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(x, y + size/3 + 2);
-        ctx.quadraticCurveTo(x + size/2, y + 2*size/3 + 2, x + size, y + size/2 + 2);
-        ctx.stroke();
-    }
-    
-    drawDeciduousForestTile(ctx, x, y, size, detailNoise) {
-        ctx.fillStyle = '#228b22';
-        ctx.fillRect(x, y, size, size);
-        
-        // Deciduous trees (mobile optimized)
-        const treeCount = Math.max(3, Math.floor(size / 5));
-        for (let i = 0; i < treeCount; i++) {
-            const treeX = x + (i % 3) * size/3 + Math.random() * size/4;
-            const treeY = y + Math.floor(i / 3) * size/2 + Math.random() * size/3;
-            const treeHeight = Math.max(5, size / 3);
-            
-            ctx.fillStyle = '#8b4513';
-            ctx.fillRect(treeX - 1, treeY, 1, treeHeight);
-            
-            const leafColors = ['#32cd32', '#90ee90', '#ffff00', '#ffa500'];
-            ctx.fillStyle = leafColors[Math.floor(Math.random() * leafColors.length)];
-            ctx.beginPath();
-            ctx.arc(treeX, treeY - treeHeight/2, Math.max(3, size / 6), 0, Math.PI * 2);
-            ctx.fill();
-        }
-    }
-    
-    drawMixedForestTile(ctx, x, y, size, detailNoise) {
-        ctx.fillStyle = '#2e8b57';
-        ctx.fillRect(x, y, size, size);
-        
-        // Mixed forest (mobile optimized)
-        const treeCount = Math.max(3, Math.floor(size / 5));
-        for (let i = 0; i < treeCount; i++) {
-            const treeX = x + (i % 2) * size/2 + Math.random() * size/3;
-            const treeY = y + Math.floor(i / 2) * size/3 + Math.random() * size/3;
-            const treeHeight = Math.max(4, size / 4);
-            
-            ctx.fillStyle = '#654321';
-            ctx.fillRect(treeX - 1, treeY, 1, treeHeight);
-            
-            if (i % 2 === 0) {
-                // Conifer
-                ctx.fillStyle = '#228b22';
-                ctx.beginPath();
-                ctx.moveTo(treeX, treeY - treeHeight * 1.5);
-                ctx.lineTo(treeX - size/8, treeY - 1);
-                ctx.lineTo(treeX + size/8, treeY - 1);
-                ctx.closePath();
-                ctx.fill();
-            } else {
-                // Deciduous
-                ctx.fillStyle = '#32cd32';
-                ctx.beginPath();
-                ctx.arc(treeX, treeY - treeHeight/2, Math.max(2, size / 10), 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
-    }
-    
-    drawDryGrasslandTile(ctx, x, y, size, detailNoise) {
-        ctx.fillStyle = '#daa520';
-        ctx.fillRect(x, y, size, size);
-        
-        // Dry grass (mobile optimized)
-        ctx.fillStyle = '#b8860b';
-        const grassCount = Math.max(15, Math.floor(size * 1.6));
-        for (let i = 0; i < grassCount; i++) {
-            const grassX = x + Math.random() * size;
-            const grassY = y + Math.random() * size;
-            ctx.fillRect(grassX, grassY, 1, Math.max(1, size / 8));
-        }
-        
-        // Scattered wildflowers
-        if (detailNoise > 0.4) {
-            const colors = ['#ff69b4', '#dda0dd'];
-            ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
-            ctx.beginPath();
-            ctx.arc(x + size * 0.6, y + size * 0.4, Math.max(1, size / 32), 0, Math.PI * 2);
-            ctx.fill();
-        }
-    }
-    
-    drawFloweringMeadowTile(ctx, x, y, size, detailNoise) {
-        ctx.fillStyle = '#90ee90';
-        ctx.fillRect(x, y, size, size);
-        
-        // Meadow grass (mobile optimized)
-        ctx.fillStyle = '#32cd32';
-        const grassCount = Math.max(9, Math.floor(size * 1.1));
-        for (let i = 0; i < grassCount; i++) {
-            const grassX = x + Math.random() * size;
-            const grassY = y + Math.random() * size;
-            ctx.fillRect(grassX, grassY, 1, 1);
-        }
-        
-        // Abundant wildflowers
-        const flowers = ['#ff1493', '#ffd700', '#ff69b4', '#dda0dd', '#00bfff'];
-        const flowerCount = Math.max(6, Math.floor(size / 3));
-        for (let i = 0; i < flowerCount; i++) {
-            ctx.fillStyle = flowers[Math.floor(Math.random() * flowers.length)];
-            const flowerX = x + Math.random() * size;
-            const flowerY = y + Math.random() * size;
-            ctx.beginPath();
-            ctx.arc(flowerX, flowerY, Math.max(1, size / 20), 0, Math.PI * 2);
-            ctx.fill();
-        }
-    }
-    
-    // Enhanced water tile (imported from game.js)
-    drawEnhancedWaterTile(ctx, x, y, size, deep, mid, light) {
-        // Create realistic water with depth variation
-        const gradient = ctx.createRadialGradient(x + size/2, y + size/2, 0, x + size/2, y + size/2, size);
-        gradient.addColorStop(0, light);
-        gradient.addColorStop(0.5, mid);
-        gradient.addColorStop(1, deep);
-        ctx.fillStyle = gradient;
-        ctx.fillRect(x, y, size, size);
-        
-        // Water movement patterns (mobile optimized)
-        ctx.save();
-        ctx.globalAlpha = 0.3;
-        ctx.fillStyle = light;
-        for (let i = 0; i < 2; i++) {
-            const waveX = x + (Math.sin((x + y + Date.now() * 0.001) * 0.02 + i) * 2);
-            const waveY = y + (Math.cos((x + y + Date.now() * 0.001) * 0.02 + i) * 2);
-            ctx.fillRect(waveX, waveY, size * 0.6, 1);
-        }
-        ctx.restore();
-    }
-    
-    // Enhanced beach tile (imported from game.js)
-    drawEnhancedBeachTile(ctx, x, y, size, moisture) {
-        // Varied sand colors based on moisture
-        const sandColor = moisture > 0 ? '#d4c27a' : '#f5e6a3';
-        const darkSand = moisture > 0 ? '#c4b26a' : '#e6d28a';
-        
-        const gradient = ctx.createLinearGradient(x, y, x + size, y + size);
-        gradient.addColorStop(0, sandColor);
-        gradient.addColorStop(1, darkSand);
-        ctx.fillStyle = gradient;
-        ctx.fillRect(x, y, size, size);
-        
-        // Sand texture (mobile optimized)
-        ctx.fillStyle = darkSand;
-        const dotCount = Math.max(12, Math.floor(size * 0.8));
-        for (let i = 0; i < dotCount; i++) {
-            const dotX = x + Math.random() * size;
-            const dotY = y + Math.random() * size;
-            const radius = 0.5 + Math.random();
-            ctx.beginPath();
-            ctx.arc(dotX, dotY, radius, 0, Math.PI * 2);
-            ctx.fill();
-        }
-        
-        // Occasional shells or debris
-        if (Math.random() < 0.1) {
-            ctx.fillStyle = '#ffffff';
-            ctx.beginPath();
-            ctx.arc(x + size * 0.7, y + size * 0.3, Math.max(1, size / 16), 0, Math.PI * 2);
-            ctx.fill();
-        }
-    }
-    
-    // Enhanced grass tile (missing function that needs to be added)
-    drawEnhancedGrassTile(ctx, x, y, size, detailNoise, moisture) {
-        // Grass color variation based on moisture and detail noise
-        const baseGreen = moisture > 0 ? '#4caf50' : '#7cb342';
-        const lightGreen = moisture > 0 ? '#66bb6a' : '#8bc34a';
-        const darkGreen = moisture > 0 ? '#388e3c' : '#689f38';
-        
-        // Create varied grass base
-        const gradient = ctx.createRadialGradient(x + size/2, y + size/2, 0, x + size/2, y + size/2, size);
-        gradient.addColorStop(0, lightGreen);
-        gradient.addColorStop(0.7, baseGreen);
-        gradient.addColorStop(1, darkGreen);
-        ctx.fillStyle = gradient;
-        ctx.fillRect(x, y, size, size);
-        
-        // Grass texture patches (mobile optimized)
-        ctx.globalAlpha = 0.6;
-        ctx.fillStyle = detailNoise > 0 ? lightGreen : darkGreen;
-        for (let i = 0; i < Math.max(4, Math.floor(size / 4)); i++) {
-            const patchX = x + Math.random() * size;
-            const patchY = y + Math.random() * size;
-            const patchSize = Math.max(1, Math.floor(size / 8));
-            ctx.fillRect(patchX, patchY, patchSize, patchSize);
-        }
-        ctx.globalAlpha = 1;
-        
-        // Varied flowers (mobile optimized)
-        if (moisture > 0.3 && Math.random() < 0.2) {
-            const colors = ['#ffeb3b', '#e91e63', '#9c27b0', '#ffffff'];
-            ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
-            const flowerX = x + size * 0.3 + Math.random() * size * 0.4;
-            const flowerY = y + size * 0.3 + Math.random() * size * 0.4;
-            ctx.beginPath();
-            ctx.arc(flowerX, flowerY, Math.max(1, size / 20), 0, Math.PI * 2);
-            ctx.fill();
-        }
-    }
-    
     // Enhanced forest tile (imported from game.js)
     drawEnhancedForestTile(ctx, x, y, size, dense, detailNoise) {
         const baseColor = dense ? '#1b5e20' : '#2e7d32';
@@ -2185,7 +1760,146 @@ class MobileVikingSettlementTycoon {
         }
     }
     
+    getDayNightInfo() {
+        const cycleProgress = (this.gameTime % this.dayLength) / this.dayLength;
+        const sunAngle = cycleProgress * Math.PI * 2 - Math.PI;
+        
+        let phase = 'day';
+        let lightLevel = 1.0;
+        
+        if (cycleProgress < 0.25) {
+            phase = 'night';
+            lightLevel = 0.4; // Slightly brighter for mobile visibility
+        } else if (cycleProgress < 0.35) {
+            phase = 'dawn';
+            lightLevel = 0.6 + (cycleProgress - 0.25) * 4;
+        } else if (cycleProgress < 0.65) {
+            phase = 'day';
+            lightLevel = 1.0;
+        } else if (cycleProgress < 0.75) {
+            phase = 'dusk';
+            lightLevel = 1.0 - (cycleProgress - 0.65) * 4;
+        } else {
+            phase = 'night';
+            lightLevel = 0.6 - (cycleProgress - 0.75) * 0.8;
+        }
+        
+        const sunX = Math.cos(sunAngle);
+        const sunY = Math.sin(sunAngle);
+        
+        let ambientColor, sunColor;
+        switch (phase) {
+            case 'dawn':
+                ambientColor = `rgba(255, 180, 120, ${lightLevel * 0.08})`;
+                sunColor = `rgba(255, 200, 100, ${lightLevel * 0.25})`;
+                break;
+            case 'day':
+                ambientColor = `rgba(255, 255, 220, ${lightLevel * 0.04})`;
+                sunColor = `rgba(255, 255, 200, ${lightLevel * 0.15})`;
+                break;
+            case 'dusk':
+                ambientColor = `rgba(255, 120, 80, ${lightLevel * 0.12})`;
+                sunColor = `rgba(255, 150, 80, ${lightLevel * 0.35})`;
+                break;
+            case 'night':
+                ambientColor = `rgba(80, 80, 150, ${0.15 - lightLevel * 0.08})`;
+                sunColor = `rgba(180, 180, 255, 0.08)`;
+                break;
+            default:
+                ambientColor = `rgba(255, 255, 255, 0.04)`;
+                sunColor = `rgba(255, 255, 255, 0.08)`;
+        }
+        
+        return {
+            phase,
+            lightLevel,
+            cycleProgress,
+            sunAngle,
+            sunX,
+            sunY,
+            ambientColor,
+            sunColor
+        };
+    }
+    
+    renderSunRays(dayNightInfo) {
+        if (dayNightInfo.phase === 'night') return;
+        
+        const { sunX, sunY, lightLevel, sunColor } = dayNightInfo;
+        
+        const screenCenterX = this.canvas.width / 2;
+        const screenCenterY = this.canvas.height / 2;
+        const sunScreenX = screenCenterX + sunX * this.canvas.width * 0.3;
+        const sunScreenY = screenCenterY - Math.abs(sunY) * this.canvas.height * 0.25;
+        
+        if (sunY < 0) return;
+        
+        this.ctx.save();
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+        
+        // Simplified sun rays for mobile performance
+        this.ctx.globalCompositeOperation = 'screen';
+        this.ctx.globalAlpha = lightLevel * 0.08;
+        
+        const rayCount = 6; // Fewer rays for mobile
+        const rayLength = Math.min(this.canvas.width, this.canvas.height) * 0.5;
+        
+        for (let i = 0; i < rayCount; i++) {
+            const angle = (i / rayCount) * Math.PI * 2;
+            const rayEndX = sunScreenX + Math.cos(angle) * rayLength;
+            const rayEndY = sunScreenY + Math.sin(angle) * rayLength;
+            
+            const gradient = this.ctx.createLinearGradient(sunScreenX, sunScreenY, rayEndX, rayEndY);
+            gradient.addColorStop(0, sunColor);
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            
+            this.ctx.strokeStyle = gradient;
+            this.ctx.lineWidth = 2;
+            this.ctx.beginPath();
+            this.ctx.moveTo(sunScreenX, sunScreenY);
+            this.ctx.lineTo(rayEndX, rayEndY);
+            this.ctx.stroke();
+        }
+        
+        // Simplified sun disc
+        const sunSize = 25 * lightLevel;
+        const sunGradient = this.ctx.createRadialGradient(sunScreenX, sunScreenY, 0, sunScreenX, sunScreenY, sunSize);
+        sunGradient.addColorStop(0, `rgba(255, 255, 150, ${lightLevel * 0.6})`);
+        sunGradient.addColorStop(0.7, `rgba(255, 200, 100, ${lightLevel * 0.3})`);
+        sunGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        
+        this.ctx.fillStyle = sunGradient;
+        this.ctx.beginPath();
+        this.ctx.arc(sunScreenX, sunScreenY, sunSize, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        this.ctx.restore();
+    }
+    
+    applyDayNightLighting(dayNightInfo) {
+        this.ctx.save();
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+        
+        const { lightLevel, ambientColor, phase } = dayNightInfo;
+        
+        // Lighter night overlay for mobile visibility
+        if (phase === 'night') {
+            this.ctx.globalCompositeOperation = 'multiply';
+            this.ctx.fillStyle = `rgba(60, 60, 120, ${0.8 - lightLevel})`;
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        } else if (phase === 'dusk' || phase === 'dawn') {
+            this.ctx.globalCompositeOperation = 'overlay';
+            this.ctx.fillStyle = ambientColor;
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        }
+        
+        this.ctx.restore();
+    }
+
     update(deltaTime) {
+        // Update game time for day/night cycle
+        this.gameTime += (deltaTime / 1000) * this.timeSpeed;
+        
         this.loadNearbyChunks();
         
         const now = Date.now();
@@ -2210,6 +1924,61 @@ class MobileVikingSettlementTycoon {
         
         this.updateMobileResourceDisplay();
         this.updateMobilePopulationDisplay();
+    }
+
+    render() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        const dayNightInfo = this.getDayNightInfo();
+        
+        this.ctx.save();
+        this.ctx.scale(this.camera.scale, this.camera.scale);
+        this.ctx.translate(-this.camera.x, -this.camera.y);
+        
+        this.renderTerrain();
+        this.renderBuildings();
+        this.renderScouts();
+        this.renderFogOfWar();
+        
+        this.ctx.restore();
+        
+        // Apply day/night lighting
+        this.applyDayNightLighting(dayNightInfo);
+        
+        // Render sun rays
+        this.renderSunRays(dayNightInfo);
+        
+        // Mobile time display in status bar
+        this.renderMobileTimeDisplay(dayNightInfo);
+    }
+    
+    renderMobileTimeDisplay(dayNightInfo) {
+        const timePercent = (this.gameTime % this.dayLength) / this.dayLength;
+        
+        let timeString = '';
+        if (timePercent < 0.25) {
+            const nightProgress = timePercent / 0.25;
+            const hour = Math.floor(21 + nightProgress * 9) % 24;
+            timeString = `${hour.toString().padStart(2, '0')}:00`;
+        } else if (timePercent < 0.5) {
+            const morningProgress = (timePercent - 0.25) / 0.25;
+            const hour = Math.floor(6 + morningProgress * 6);
+            timeString = `${hour.toString().padStart(2, '0')}:00`;
+        } else if (timePercent < 0.75) {
+            const dayProgress = (timePercent - 0.5) / 0.25;
+            const hour = Math.floor(12 + dayProgress * 6);
+            timeString = `${hour.toString().padStart(2, '0')}:00`;
+        } else {
+            const eveningProgress = (timePercent - 0.75) / 0.25;
+            const hour = Math.floor(18 + eveningProgress * 3);
+            timeString = `${hour.toString().padStart(2, '0')}:00`;
+        }
+        
+        // Update DOM element for mobile time display
+        const timeElement = document.getElementById('mobileTime');
+        if (timeElement) {
+            timeElement.textContent = `${dayNightInfo.phase} ${timeString}`;
+        }
     }
     
     updateScouts(deltaTime) {
@@ -2278,21 +2047,6 @@ class MobileVikingSettlementTycoon {
     
     easeOutQuad(t) {
         return 1 - (1 - t) * (1 - t);
-    }
-    
-    render() {
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        
-        this.ctx.save();
-        this.ctx.scale(this.camera.scale, this.camera.scale);
-        this.ctx.translate(-this.camera.x, -this.camera.y);
-        
-        this.renderTerrain();
-        this.renderBuildings();
-        this.renderScouts();
-        this.renderFogOfWar();
-        
-        this.ctx.restore();
     }
     
     renderTerrain() {
