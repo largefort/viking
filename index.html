@@ -36,7 +36,7 @@
             <div class="status-section">
                 <h1 class="mobile-title">Viking Tycoon</h1>
                 <div class="mobile-population">
-                    <span class="mobile-icon">👥</span>
+                    <img class="mobile-icon" src="population_icon.png" alt="Population">
                     <span id="mobilePop">5</span>
                 </div>
             </div>
@@ -45,28 +45,28 @@
         <!-- Mobile Resources Panel -->
         <div id="mobileResourcesPanel">
             <div class="mobile-resource">
-                <span class="mobile-resource-icon">🌾</span>
+                <img class="mobile-resource-icon" src="food_icon.png" alt="Food">
                 <div class="mobile-resource-info">
                     <span id="mobileFood">100</span>
                     <span class="mobile-rate">(0/s)</span>
                 </div>
             </div>
             <div class="mobile-resource">
-                <span class="mobile-resource-icon">🪵</span>
+                <img class="mobile-resource-icon" src="wood_icon.png" alt="Wood">
                 <div class="mobile-resource-info">
                     <span id="mobileWood">50</span>
                     <span class="mobile-rate">(0/s)</span>
                 </div>
             </div>
             <div class="mobile-resource">
-                <span class="mobile-resource-icon">⚒️</span>
+                <img class="mobile-resource-icon" src="iron_icon.png" alt="Iron">
                 <div class="mobile-resource-info">
                     <span id="mobileIron">25</span>
                     <span class="mobile-rate">(0/s)</span>
                 </div>
             </div>
             <div class="mobile-resource">
-                <span class="mobile-resource-icon">🏺</span>
+                <img class="mobile-resource-icon" src="gold_icon.png" alt="Gold">
                 <div class="mobile-resource-info">
                     <span id="mobileGold">10</span>
                     <span class="mobile-rate">(0/s)</span>
@@ -88,43 +88,43 @@
         <div id="mobileBottomPanel">
             <!-- Tab Navigation -->
             <div id="mobileTabNav">
-                <button class="mobile-tab active" data-tab="buildings">🏗️ Build</button>
-                <button class="mobile-tab" data-tab="stats">📊 Stats</button>
-                <button class="mobile-tab" data-tab="actions">⚙️ Actions</button>
+                <button class="mobile-tab active" data-tab="buildings"><img src="build_icon.png" class="tab-icon"> Build</button>
+                <button class="mobile-tab" data-tab="stats"><img src="stats_icon.png" class="tab-icon"> Stats</button>
+                <button class="mobile-tab" data-tab="actions"><img src="actions_icon.png" class="tab-icon"> Actions</button>
             </div>
 
             <!-- Buildings Tab -->
             <div id="mobileBuildingsTab" class="mobile-tab-content active">
                 <div class="mobile-building-grid">
                     <div class="mobile-building-card" data-building="longhouse">
-                        <div class="mobile-building-icon">🏘️</div>
+                        <img class="mobile-building-icon" src="longhouse_icon.png" alt="Longhouse">
                         <div class="mobile-building-name">Longhouse</div>
-                        <div class="mobile-building-cost">🪵20 🌾10</div>
+                        <div class="mobile-building-cost"><img src="wood_icon.png" class="cost-icon-small">20 <img src="food_icon.png" class="cost-icon-small">10</div>
                     </div>
                     <div class="mobile-building-card" data-building="farm">
-                        <div class="mobile-building-icon">🌾</div>
+                        <img class="mobile-building-icon" src="farm_icon.png" alt="Farm">
                         <div class="mobile-building-name">Farm</div>
-                        <div class="mobile-building-cost">🪵15</div>
+                        <div class="mobile-building-cost"><img src="wood_icon.png" class="cost-icon-small">15</div>
                     </div>
                     <div class="mobile-building-card" data-building="lumbermill">
-                        <div class="mobile-building-icon">🪓</div>
+                        <img class="mobile-building-icon" src="lumbermill_icon.png" alt="Mill">
                         <div class="mobile-building-name">Mill</div>
-                        <div class="mobile-building-cost">🪵25 ⚒️5</div>
+                        <div class="mobile-building-cost"><img src="wood_icon.png" class="cost-icon-small">25 <img src="iron_icon.png" class="cost-icon-small">5</div>
                     </div>
                     <div class="mobile-building-card" data-building="blacksmith">
-                        <div class="mobile-building-icon">⚒️</div>
+                        <img class="mobile-building-icon" src="blacksmith_icon.png" alt="Smith">
                         <div class="mobile-building-name">Smith</div>
-                        <div class="mobile-building-cost">🪵30 ⚒️10</div>
+                        <div class="mobile-building-cost"><img src="wood_icon.png" class="cost-icon-small">30 <img src="iron_icon.png" class="cost-icon-small">10</div>
                     </div>
                     <div class="mobile-building-card" data-building="tradingpost">
-                        <div class="mobile-building-icon">⛵</div>
+                        <img class="mobile-building-icon" src="tradingpost_icon.png" alt="Trade">
                         <div class="mobile-building-name">Trade</div>
-                        <div class="mobile-building-cost">🪵40 🏺5</div>
+                        <div class="mobile-building-cost"><img src="wood_icon.png" class="cost-icon-small">40 <img src="gold_icon.png" class="cost-icon-small">5</div>
                     </div>
                     <div class="mobile-building-card" data-building="temple">
-                        <div class="mobile-building-icon">⚡</div>
+                        <img class="mobile-building-icon" src="temple_icon.png" alt="Temple">
                         <div class="mobile-building-name">Temple</div>
-                        <div class="mobile-building-cost">🪵50 ⚒️20</div>
+                        <div class="mobile-building-cost"><img src="wood_icon.png" class="cost-icon-small">50 <img src="iron_icon.png" class="cost-icon-small">20</div>
                     </div>
                 </div>
             </div>
@@ -157,16 +157,16 @@
             <div id="mobileActionsTab" class="mobile-tab-content">
                 <div class="mobile-actions-grid">
                     <button id="mobileNewTerritoryBtn" class="mobile-action-btn">
-                        🗺️ New Territory
+                        <img src="map_icon.png" class="mobile-btn-icon"> New Territory
                     </button>
                     <button id="mobileSaveBtn" class="mobile-action-btn">
-                        💾 Save Game
+                        <img src="save_icon.png" class="mobile-btn-icon"> Save Game
                     </button>
                     <button id="mobileInfoBtn" class="mobile-action-btn">
-                        ℹ️ Device Info
+                        <img src="info_icon.png" class="mobile-btn-icon"> Device Info
                     </button>
                     <button id="mobileHelpBtn" class="mobile-action-btn">
-                        ❓ Help
+                        <img src="help_icon.png" class="mobile-btn-icon"> Help
                     </button>
                 </div>
             </div>

@@ -69,6 +69,8 @@ body {
 
 .mobile-icon {
     font-size: 1.1rem;
+    width: 18px;
+    height: 18px;
 }
 
 #mobilePop {
@@ -102,6 +104,8 @@ body {
 
 .mobile-resource-icon {
     font-size: 1.2rem;
+    width: 20px;
+    height: 20px;
 }
 
 .mobile-resource-info {
@@ -190,6 +194,13 @@ body {
     text-align: center;
 }
 
+.tab-icon {
+    width: 14px;
+    height: 14px;
+    vertical-align: middle;
+    margin-right: 3px;
+}
+
 .mobile-tab.active {
     color: #d4af37;
     background: rgba(212,175,55,0.1);
@@ -239,20 +250,10 @@ body {
     overflow: hidden;
 }
 
-.mobile-building-card:active {
-    background: rgba(212,175,55,0.2);
-    border-color: #d4af37;
-    transform: scale(0.95);
-}
-
-.mobile-building-card.selected {
-    border-color: #d4af37;
-    background: rgba(212,175,55,0.15);
-    box-shadow: 0 0 10px rgba(212,175,55,0.3);
-}
-
 .mobile-building-icon {
     font-size: 1.4rem;
+    width: 22px;
+    height: 22px;
     margin-bottom: 2px;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
 }
@@ -272,6 +273,25 @@ body {
     text-align: center;
     line-height: 1.2;
     font-weight: 400;
+}
+
+.cost-icon-small {
+    width: 10px;
+    height: 10px;
+    vertical-align: middle;
+    margin-right: 1px;
+}
+
+.mobile-building-card:active {
+    background: rgba(212,175,55,0.2);
+    border-color: #d4af37;
+    transform: scale(0.95);
+}
+
+.mobile-building-card.selected {
+    border-color: #d4af37;
+    background: rgba(212,175,55,0.15);
+    box-shadow: 0 0 10px rgba(212,175,55,0.3);
 }
 
 /* Mobile Stats Grid */
@@ -328,6 +348,13 @@ body {
     cursor: pointer;
     transition: all 0.2s ease;
     text-align: center;
+}
+
+.mobile-btn-icon {
+    width: 14px;
+    height: 14px;
+    vertical-align: middle;
+    margin-right: 3px;
 }
 
 .mobile-action-btn:active {

@@ -672,42 +672,42 @@ class MobileVikingSettlementTycoon {
         const buildings = {
             longhouse: {
                 name: 'Longhouse',
-                icon: '🏘️',
+                sprite: 'longhouse_sprite.png',
                 cost: { wood: 20, food: 10 },
                 produces: { population: 3 },
                 size: 32
             },
             farm: {
                 name: 'Farm',
-                icon: '🌾',
+                sprite: 'farm_sprite.png',
                 cost: { wood: 15 },
                 produces: { food: 2 },
                 size: 28
             },
             lumbermill: {
                 name: 'Lumber Mill',
-                icon: '🪓',
+                sprite: 'lumbermill_sprite.png',
                 cost: { wood: 25, iron: 5 },
                 produces: { wood: 3 },
                 size: 30
             },
             blacksmith: {
                 name: 'Blacksmith',
-                icon: '⚒️',
+                sprite: 'blacksmith_sprite.png',
                 cost: { wood: 30, iron: 10 },
                 produces: { iron: 2 },
                 size: 26
             },
             tradingpost: {
                 name: 'Trading Post',
-                icon: '⛵',
+                sprite: 'tradingpost_sprite.png',
                 cost: { wood: 40, gold: 5 },
                 produces: { gold: 1 },
                 size: 30
             },
             temple: {
                 name: 'Temple',
-                icon: '⚡',
+                sprite: 'temple_sprite.png',
                 cost: { wood: 50, iron: 20, gold: 15 },
                 produces: { happiness: 10 },
                 size: 36
@@ -1045,127 +1045,6 @@ class MobileVikingSettlementTycoon {
         chunk.tiles.forEach(tile => {
             this.drawTerrainDetails(detailCtx, tile.type, tile.localX, tile.localY, this.tileSize, tile.detailNoise);
         });
-    }
-    
-    drawEnhancedTerrainTile(ctx, tileType, x, y, size, noise, detailNoise, moisture) {
-        switch(tileType) {
-            // Arctic biome tiles
-            case 'arctic_ice':
-                this.drawArcticIceTile(ctx, x, y, size);
-                break;
-            case 'tundra_grass':
-                this.drawTundraGrassTile(ctx, x, y, size, detailNoise);
-                break;
-            case 'sparse_forest':
-                this.drawSparseForestTile(ctx, x, y, size, detailNoise);
-                break;
-                
-            // Boreal biome tiles
-            case 'boreal_lake':
-                this.drawBorealLakeTile(ctx, x, y, size);
-                break;
-            case 'wetland':
-                this.drawWetlandTile(ctx, x, y, size, moisture);
-                break;
-            case 'dense_conifer_forest':
-                this.drawDenseConiferTile(ctx, x, y, size, detailNoise);
-                break;
-            case 'conifer_forest':
-                this.drawConiferForestTile(ctx, x, y, size, detailNoise);
-                break;
-            case 'boreal_clearing':
-                this.drawBorealClearingTile(ctx, x, y, size, detailNoise);
-                break;
-            case 'rocky_terrain':
-                this.drawRockyTerrainTile(ctx, x, y, size, detailNoise);
-                break;
-                
-            // Coastal biome tiles
-            case 'deep_fjord_water':
-                this.drawDeepFjordTile(ctx, x, y, size);
-                break;
-            case 'rocky_shore':
-                this.drawRockyShoreTile(ctx, x, y, size, detailNoise);
-                break;
-            case 'coastal_forest':
-                this.drawCoastalForestTile(ctx, x, y, size, detailNoise);
-                break;
-            case 'sea_cliff':
-                this.drawSeaCliffTile(ctx, x, y, size, detailNoise);
-                break;
-            case 'coastal_grass':
-                this.drawCoastalGrassTile(ctx, x, y, size, moisture);
-                break;
-                
-            // Mountain biome tiles
-            case 'snow_peak':
-                this.drawSnowPeakTile(ctx, x, y, size, detailNoise);
-                break;
-            case 'rocky_peak':
-                this.drawRockyPeakTile(ctx, x, y, size, detailNoise);
-                break;
-            case 'alpine_forest':
-                this.drawAlpineForestTile(ctx, x, y, size, detailNoise);
-                break;
-            case 'rocky_slope':
-                this.drawRockySlopeTile(ctx, x, y, size, detailNoise);
-                break;
-            case 'alpine_meadow':
-                this.drawAlpineMeadowTile(ctx, x, y, size, detailNoise);
-                break;
-            case 'mountain_forest':
-                this.drawMountainForestTile(ctx, x, y, size, detailNoise);
-                break;
-            case 'mountain_stream':
-                this.drawMountainStreamTile(ctx, x, y, size);
-                break;
-                
-            // Temperate biome tiles
-            case 'river':
-                this.drawRiverTile(ctx, x, y, size);
-                break;
-            case 'deciduous_forest':
-                this.drawDeciduousForestTile(ctx, x, y, size, detailNoise);
-                break;
-            case 'mixed_forest':
-                this.drawMixedForestTile(ctx, x, y, size, detailNoise);
-                break;
-            case 'dry_grassland':
-                this.drawDryGrasslandTile(ctx, x, y, size, detailNoise);
-                break;
-            case 'flowering_meadow':
-                this.drawFloweringMeadowTile(ctx, x, y, size, detailNoise);
-                break;
-                
-            // Existing tiles (fallback)
-            case 'deep_water':
-                this.drawEnhancedWaterTile(ctx, x, y, size, '#0d47a1', '#1565c0', '#1976d2');
-                break;
-            case 'shallow_water':
-                this.drawEnhancedWaterTile(ctx, x, y, size, '#1976d2', '#2196f3', '#42a5f5');
-                break;
-            case 'beach':
-                this.drawEnhancedBeachTile(ctx, x, y, size, moisture);
-                break;
-            case 'grass':
-                this.drawEnhancedGrassTile(ctx, x, y, size, detailNoise, moisture);
-                break;
-            case 'forest':
-                this.drawEnhancedForestTile(ctx, x, y, size, false, detailNoise);
-                break;
-            case 'dense_forest':
-                this.drawEnhancedForestTile(ctx, x, y, size, true, detailNoise);
-                break;
-            case 'hills':
-                this.drawEnhancedHillsTile(ctx, x, y, size, detailNoise);
-                break;
-            case 'mountain':
-                this.drawEnhancedMountainTile(ctx, x, y, size, detailNoise);
-                break;
-            case 'snow':
-                this.drawEnhancedSnowTile(ctx, x, y, size, detailNoise);
-                break;
-        }
     }
     
     // Arctic biome tile renderers (imported from game.js)
@@ -2357,20 +2236,40 @@ class MobileVikingSettlementTycoon {
     
     renderBuildings() {
         this.buildings.forEach(building => {
+            // Building shadow
             this.ctx.fillStyle = 'rgba(0,0,0,0.3)';
             this.ctx.fillRect(building.x + 2, building.y + 2, building.size, building.size);
             
-            this.ctx.fillStyle = '#8b4513';
-            this.ctx.fillRect(building.x, building.y, building.size, building.size);
+            // Load and render building sprite
+            if (building.sprite && !building.spriteImage) {
+                building.spriteImage = new Image();
+                building.spriteImage.src = building.sprite;
+            }
             
-            this.ctx.fillStyle = '#f0f0f0';
-            this.ctx.font = `${building.size * 0.6}px Arial`;
-            this.ctx.textAlign = 'center';
-            this.ctx.fillText(
-                building.icon,
-                building.x + building.size / 2,
-                building.y + building.size * 0.7
-            );
+            if (building.spriteImage && building.spriteImage.complete) {
+                // Draw building sprite
+                this.ctx.drawImage(
+                    building.spriteImage,
+                    building.x,
+                    building.y,
+                    building.size,
+                    building.size
+                );
+            } else {
+                // Fallback rendering while sprite loads
+                this.ctx.fillStyle = '#8b4513';
+                this.ctx.fillRect(building.x, building.y, building.size, building.size);
+                
+                // Building icon as fallback
+                this.ctx.fillStyle = '#f0f0f0';
+                this.ctx.font = `${building.size * 0.6}px Arial`;
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(
+                    building.icon || '🏘️',
+                    building.x + building.size / 2,
+                    building.y + building.size * 0.7
+                );
+            }
         });
     }
     
