@@ -21,8 +21,8 @@ class MobileVikingSettlementTycoon {
         
         // Day/Night cycle (mobile optimized)
         this.gameTime = 0;
-        this.dayLength = 90; // Shorter cycle for mobile - 1.5 minutes
-        this.timeSpeed = 1.2; // Slightly faster for mobile
+        this.dayLength = 3600; // 60 minutes per full day/night cycle (30 min day + 30 min night) 
+        this.timeSpeed = 1; // Normal speed for realistic experience
         
         // Mobile-specific properties
         this.activeTab = 'buildings';
@@ -48,6 +48,17 @@ class MobileVikingSettlementTycoon {
         this.scouts = [];
         this.exploredAreas = new Set();
         this.revealAnimations = [];
+        
+        // Lightning system (mobile optimized)
+        this.lightningSystem = {
+            enabled: true,
+            strikes: [],
+            nextStrike: 0,
+            minInterval: 8000,  // Longer intervals for mobile
+            maxInterval: 45000,
+            stormChance: 0.25,  // Slightly reduced for performance
+            normalChance: 0.015 // Reduced frequency
+        };
         
         // Touch handling
         this.touchState = {
@@ -522,8 +533,24 @@ class MobileVikingSettlementTycoon {
             // Convert fog of war data to serializable format
             const fogOfWarData = {};
             for (const [chunkKey, fogData] of this.fogOfWar) {
-                // Convert canvas to base64 data URL for storage
-                fogOfWarData[chunkKey] = fogData.canvas.toDataURL();
+                // Create new image from saved data
+                const img = new Image();
+                img.onload = () => {
+                    // Get or create fog canvas for this chunk
+                    let fogData = this.fogOfWar.get(chunkKey);
+                    if (!fogData) {
+                        const [chunkX, chunkY] = chunkKey.split(',').map(Number);
+                        this.initializeChunkFogOfWar(chunkX, chunkY);
+                        fogData = this.fogOfWar.get(chunkKey);
+                    }
+                    
+                    if (fogData) {
+                        // Clear the canvas and draw the saved fog data
+                        fogData.ctx.clearRect(0, 0, this.chunkSize, this.chunkSize);
+                        fogData.ctx.drawImage(img, 0, 0);
+                    }
+                };
+                img.src = fogData.canvas.toDataURL();
             }
 
             const gameState = {
@@ -1305,45 +1332,154 @@ class MobileVikingSettlementTycoon {
         }
     }
     
-    drawEnhancedForestTile(ctx, x, y, size, dense, detailNoise) {
-        const baseColor = dense ? '#1b5e20' : '#2e7d32';
-        const canopyColor = dense ? '#0d3f0f' : '#1b5e20';
-        const lightColor = dense ? '#2e7d32' : '#4caf50';
-        
-        // Forest floor
-        const gradient = ctx.createRadialGradient(x + size/2, y + size/2, 0, x + size/2, y + size/2, size);
-        gradient.addColorStop(0, baseColor);
-        gradient.addColorStop(1, canopyColor);
-        ctx.fillStyle = gradient;
+    drawConiferForestTile(ctx, x, y, size, detailNoise) {
+        // Base forest floor
+        ctx.fillStyle = '#1b5e20';
         ctx.fillRect(x, y, size, size);
         
-        // Multiple tree layers for depth (mobile optimized)
-        const treeCount = Math.max(dense ? 3 : 2, Math.floor(size / (dense ? 6 : 10)));
+        // Coniferous trees (pine/spruce style)
+        const treeCount = Math.max(2, Math.floor(size / 8));
         for (let i = 0; i < treeCount; i++) {
-            const treeX = x + (i % 2) * size/2 + Math.random() * size/2;
-            const treeY = y + Math.floor(i / 2) * size/2 + Math.random() * size/2;
-            const treeSize = Math.max(2, 3 + Math.random() * (dense ? 4 : 3));
+            const treeX = x + (i % 2) * size/2 + Math.random() * size/3;
+            const treeY = y + Math.floor(i / 2) * size/2 + Math.random() * size/3;
+            const treeHeight = Math.max(3, size / 5);
+            
+            // Tree trunk
+            ctx.fillStyle = '#3e2723';
+            ctx.fillRect(treeX - 1, treeY, 1, treeHeight);
+            
+            // Conifer shape (triangular)
+            ctx.fillStyle = '#0d4f0d';
+            ctx.beginPath();
+            ctx.moveTo(treeX, treeY - treeHeight * 1.5);
+            ctx.lineTo(treeX - size/10, treeY - 1);
+            ctx.lineTo(treeX + size/10, treeY - 1);
+            ctx.closePath();
+            ctx.fill();
             
             // Tree shadow
             ctx.fillStyle = 'rgba(0,0,0,0.2)';
             ctx.beginPath();
-            ctx.arc(treeX + 1, treeY + 1, treeSize * 0.8, 0, Math.PI * 2);
+            ctx.moveTo(treeX + 1, treeY - treeHeight * 1.4);
+            ctx.lineTo(treeX - size/12, treeY);
+            ctx.lineTo(treeX + size/8, treeY);
+            ctx.closePath();
             ctx.fill();
+        }
+        
+        // Forest floor details
+        if (detailNoise > 0.2) {
+            ctx.fillStyle = '#2e4d2e';
+            for (let i = 0; i < Math.max(3, Math.floor(size / 6)); i++) {
+                const detailX = x + Math.random() * size;
+                const detailY = y + Math.random() * size;
+                ctx.fillRect(detailX, detailY, 1, 1);
+            }
+        }
+    }
+
+    drawDenseConiferTile(ctx, x, y, size, detailNoise) {
+        // Darker base for dense forest
+        ctx.fillStyle = '#0d3f0f';
+        ctx.fillRect(x, y, size, size);
+        
+        // More trees packed together
+        const treeCount = Math.max(4, Math.floor(size / 6));
+        for (let i = 0; i < treeCount; i++) {
+            const treeX = x + (i % 3) * size/3 + Math.random() * size/4;
+            const treeY = y + Math.floor(i / 3) * size/3 + Math.random() * size/4;
+            const treeHeight = Math.max(2, size / 6);
             
             // Tree trunk
-            ctx.fillStyle = '#3e2723';
-            ctx.fillRect(treeX - 1, treeY, 1, Math.max(2, treeSize * 0.4));
+            ctx.fillStyle = '#2d1b14';
+            ctx.fillRect(treeX - 1, treeY, 1, treeHeight);
             
-            // Tree canopy with layers
-            ctx.fillStyle = canopyColor;
+            // Dense conifer canopy
+            ctx.fillStyle = '#0a3a0a';
             ctx.beginPath();
-            ctx.arc(treeX, treeY - treeSize * 0.2, treeSize, 0, Math.PI * 2);
+            ctx.moveTo(treeX, treeY - treeHeight * 1.3);
+            ctx.lineTo(treeX - size/12, treeY - 1);
+            ctx.lineTo(treeX + size/12, treeY - 1);
+            ctx.closePath();
             ctx.fill();
+        }
+        
+        // Very dense undergrowth
+        ctx.fillStyle = '#1a4d1a';
+        for (let i = 0; i < Math.max(5, Math.floor(size * 0.8)); i++) {
+            const undergrowthX = x + Math.random() * size;
+            const undergrowthY = y + Math.random() * size;
+            ctx.fillRect(undergrowthX, undergrowthY, 1, Math.max(1, size / 12));
+        }
+    }
+
+    drawSparseForestTile(ctx, x, y, size, detailNoise) {
+        // Grass base with scattered trees
+        ctx.fillStyle = '#4caf50';
+        ctx.fillRect(x, y, size, size);
+        
+        // Few scattered coniferous trees
+        const treeCount = Math.max(1, Math.floor(size / 12));
+        for (let i = 0; i < treeCount; i++) {
+            const treeX = x + Math.random() * size;
+            const treeY = y + Math.random() * size;
+            const treeHeight = Math.max(3, size / 4);
             
-            // Canopy highlight
-            ctx.fillStyle = lightColor;
+            // Tree trunk
+            ctx.fillStyle = '#5d4037';
+            ctx.fillRect(treeX - 1, treeY, 1, treeHeight);
+            
+            // Sparse conifer
+            ctx.fillStyle = '#2e7d32';
             ctx.beginPath();
-            ctx.arc(treeX - 1, treeY - treeSize * 0.4, treeSize * 0.6, 0, Math.PI * 2);
+            ctx.moveTo(treeX, treeY - treeHeight * 1.2);
+            ctx.lineTo(treeX - size/14, treeY - 1);
+            ctx.lineTo(treeX + size/14, treeY - 1);
+            ctx.closePath();
+            ctx.fill();
+        }
+        
+        // Grass details
+        ctx.fillStyle = '#66bb6a';
+        for (let i = 0; i < Math.max(4, Math.floor(size * 0.5)); i++) {
+            const grassX = x + Math.random() * size;
+            const grassY = y + Math.random() * size;
+            ctx.fillRect(grassX, grassY, 1, Math.max(1, size / 8));
+        }
+    }
+
+    drawCoastalForestTile(ctx, x, y, size, detailNoise) {
+        // Coastal forest base (mixed grass/sand)
+        ctx.fillStyle = '#7cb342';
+        ctx.fillRect(x, y, size, size);
+        
+        // Coastal trees (adapted to salt air)
+        const treeCount = Math.max(2, Math.floor(size / 10));
+        for (let i = 0; i < treeCount; i++) {
+            const treeX = x + (i % 2) * size/2 + Math.random() * size/3;
+            const treeY = y + Math.floor(i / 2) * size/2 + Math.random() * size/3;
+            const treeHeight = Math.max(3, size / 6);
+            
+            // Weathered trunk
+            ctx.fillStyle = '#6d4c41';
+            ctx.fillRect(treeX - 1, treeY, 1, treeHeight);
+            
+            // Wind-bent coastal conifer
+            ctx.fillStyle = '#388e3c';
+            ctx.beginPath();
+            ctx.moveTo(treeX + size/20, treeY - treeHeight * 1.4); // Slightly bent
+            ctx.lineTo(treeX - size/12, treeY - 1);
+            ctx.lineTo(treeX + size/8, treeY - 1);
+            ctx.closePath();
+            ctx.fill();
+        }
+        
+        // Coastal vegetation
+        if (detailNoise > 0.1) {
+            const coastalColors = ['#8bc34a', '#cddc39', '#ffeb3b'];
+            ctx.fillStyle = coastalColors[Math.floor(Math.random() * coastalColors.length)];
+            ctx.beginPath();
+            ctx.arc(x + size * 0.7, y + size * 0.3, Math.max(1, size / 16), 0, Math.PI * 2);
             ctx.fill();
         }
     }
@@ -1431,7 +1567,7 @@ class MobileVikingSettlementTycoon {
             const colors = ['#ff69b4', '#9370db', '#00bfff'];
             ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
             ctx.beginPath();
-            ctx.arc(x + size * 0.7, y + size * 0.8, Math.max(1, size / 16), 0, Math.PI * 2);
+            ctx.arc(x + size * 0.7, y + size * 0.8, Math.max(1, size / 20), 0, Math.PI);
             ctx.fill();
         }
     }
@@ -1525,7 +1661,7 @@ class MobileVikingSettlementTycoon {
         if (detailNoise > 0.3) {
             ctx.fillStyle = '#fafafa';
             ctx.beginPath();
-            ctx.arc(x + size * 0.3, y + size * 0.2, Math.max(1, size / 12), 0, Math.PI);
+            ctx.arc(x + size * 0.3, y + size * 0.2, Math.max(1, size / 20), 0, Math.PI);
             ctx.fill();
         }
     }
@@ -1687,6 +1823,50 @@ class MobileVikingSettlementTycoon {
             ctx.beginPath();
             ctx.arc(flowerX, flowerY, Math.max(1, size / 16), 0, Math.PI * 2);
             ctx.fill();
+        }
+    }
+    
+    drawCoastalGrassTile(ctx, x, y, size, moisture) {
+        // Coastal grass with salt-tolerant characteristics
+        const baseColor = moisture > 0.5 ? '#9ccc65' : '#8bc34a';
+        const lightColor = moisture > 0.5 ? '#aed581' : '#9ccc65';
+        const darkColor = '#689f38';
+        
+        // Base gradient
+        const gradient = ctx.createRadialGradient(x + size/2, y + size/2, 0, x + size/2, y + size/2, size);
+        gradient.addColorStop(0, lightColor);
+        gradient.addColorStop(0.7, baseColor);
+        gradient.addColorStop(1, darkColor);
+        ctx.fillStyle = gradient;
+        ctx.fillRect(x, y, size, size);
+        
+        // Coastal grass patches (hardy, wind-bent)
+        ctx.globalAlpha = 0.7;
+        ctx.fillStyle = darkColor;
+        for (let i = 0; i < Math.max(3, Math.floor(size / 5)); i++) {
+            const grassX = x + Math.random() * size;
+            const grassY = y + Math.random() * size;
+            const grassSize = Math.max(1, 1 + Math.random() * 2);
+            // Slightly bent grass (coastal wind effect)
+            ctx.fillRect(grassX, grassY, grassSize, Math.max(2, size / 6));
+            ctx.fillRect(grassX + 1, grassY - 1, 1, Math.max(1, size / 8));
+        }
+        ctx.globalAlpha = 1;
+        
+        // Salt-resistant plants
+        if (moisture < 0.4 && Math.random() < 0.15) {
+            ctx.fillStyle = '#cddc39';
+            const plantX = x + size * 0.3 + Math.random() * size * 0.4;
+            const plantY = y + size * 0.3 + Math.random() * size * 0.4;
+            ctx.beginPath();
+            ctx.arc(plantX, plantY, Math.max(1, size / 20), 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Occasional driftwood or beach debris
+        if (Math.random() < 0.08) {
+            ctx.fillStyle = '#8d6e63';
+            ctx.fillRect(x + size * 0.6, y + size * 0.7, Math.max(2, size / 8), Math.max(1, size / 16));
         }
     }
     
@@ -1860,7 +2040,7 @@ class MobileVikingSettlementTycoon {
                 sunColor = `rgba(255, 150, 80, ${lightLevel * 0.35})`;
                 break;
             case 'night':
-                ambientColor = `rgba(80, 80, 150, ${0.15 - lightLevel * 0.08})`;
+                ambientColor = `rgba(80, 80, 150, ${0.15 - lightLevel * 0.3})`;
                 sunColor = `rgba(180, 180, 255, 0.08)`;
                 break;
             default:
@@ -1880,80 +2060,6 @@ class MobileVikingSettlementTycoon {
         };
     }
     
-    renderSunRays(dayNightInfo) {
-        if (dayNightInfo.phase === 'night') return;
-        
-        const { sunX, sunY, lightLevel, sunColor } = dayNightInfo;
-        
-        const screenCenterX = this.canvas.width / 2;
-        const screenCenterY = this.canvas.height / 2;
-        const sunScreenX = screenCenterX + sunX * this.canvas.width * 0.3;
-        const sunScreenY = screenCenterY - Math.abs(sunY) * this.canvas.height * 0.25;
-        
-        if (sunY < 0) return;
-        
-        this.ctx.save();
-        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-        
-        // Simplified sun rays for mobile performance
-        this.ctx.globalCompositeOperation = 'screen';
-        this.ctx.globalAlpha = lightLevel * 0.08;
-        
-        const rayCount = 6; // Fewer rays for mobile
-        const rayLength = Math.min(this.canvas.width, this.canvas.height) * 0.5;
-        
-        for (let i = 0; i < rayCount; i++) {
-            const angle = (i / rayCount) * Math.PI * 2;
-            const rayEndX = sunScreenX + Math.cos(angle) * rayLength;
-            const rayEndY = sunScreenY + Math.sin(angle) * rayLength;
-            
-            const gradient = this.ctx.createLinearGradient(sunScreenX, sunScreenY, rayEndX, rayEndY);
-            gradient.addColorStop(0, sunColor);
-            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-            
-            this.ctx.strokeStyle = gradient;
-            this.ctx.lineWidth = 2;
-            this.ctx.beginPath();
-            this.ctx.moveTo(sunScreenX, sunScreenY);
-            this.ctx.lineTo(rayEndX, rayEndY);
-            this.ctx.stroke();
-        }
-        
-        // Simplified sun disc
-        const sunSize = 25 * lightLevel;
-        const sunGradient = this.ctx.createRadialGradient(sunScreenX, sunScreenY, 0, sunScreenX, sunScreenY, sunSize);
-        sunGradient.addColorStop(0, `rgba(255, 255, 150, ${lightLevel * 0.6})`);
-        sunGradient.addColorStop(0.7, `rgba(255, 200, 100, ${lightLevel * 0.3})`);
-        sunGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-        
-        this.ctx.fillStyle = sunGradient;
-        this.ctx.beginPath();
-        this.ctx.arc(sunScreenX, sunScreenY, sunSize, 0, Math.PI * 2);
-        this.ctx.fill();
-        
-        this.ctx.restore();
-    }
-    
-    applyDayNightLighting(dayNightInfo) {
-        this.ctx.save();
-        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-        
-        const { lightLevel, ambientColor, phase } = dayNightInfo;
-        
-        // Lighter night overlay for mobile visibility
-        if (phase === 'night') {
-            this.ctx.globalCompositeOperation = 'multiply';
-            this.ctx.fillStyle = `rgba(60, 60, 120, ${0.8 - lightLevel})`;
-            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        } else if (phase === 'dusk' || phase === 'dawn') {
-            this.ctx.globalCompositeOperation = 'overlay';
-            this.ctx.fillStyle = ambientColor;
-            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        }
-        
-        this.ctx.restore();
-    }
-
     update(deltaTime) {
         // Update game time for day/night cycle
         this.gameTime += (deltaTime / 1000) * this.timeSpeed;
@@ -1977,13 +2083,251 @@ class MobileVikingSettlementTycoon {
             }
         });
         
+        // Update lightning system
+        this.updateLightning(deltaTime);
+        
         this.updateScouts(deltaTime);
         this.updateRevealAnimations();
         
         this.updateMobileResourceDisplay();
         this.updateMobilePopulationDisplay();
     }
-
+    
+    updateLightning(deltaTime) {
+        const now = Date.now();
+        const dayNightInfo = this.getDayNightInfo();
+        
+        // Determine lightning chance based on conditions
+        let lightningChance = this.lightningSystem.normalChance;
+        if (dayNightInfo.phase === 'night' || dayNightInfo.phase === 'dusk') {
+            lightningChance *= 1.5; // Less dramatic increase for mobile
+        }
+        
+        // Simple weather simulation
+        const weatherNoise = this.seededNoise(now * 0.0001, this.seed);
+        const isStormy = weatherNoise > 0.4; // Higher threshold for mobile
+        if (isStormy) {
+            lightningChance = this.lightningSystem.stormChance;
+        }
+        
+        // Check if it's time for lightning
+        if (now > this.lightningSystem.nextStrike && Math.random() < lightningChance) {
+            this.createLightningStrike();
+            
+            // Schedule next potential strike
+            const interval = this.lightningSystem.minInterval + 
+                           Math.random() * (this.lightningSystem.maxInterval - this.lightningSystem.minInterval);
+            this.lightningSystem.nextStrike = now + interval;
+        }
+        
+        // Update active lightning strikes
+        this.lightningSystem.strikes = this.lightningSystem.strikes.filter(strike => {
+            strike.age += deltaTime;
+            strike.alpha = Math.max(0, 1 - (strike.age / strike.duration));
+            return strike.age < strike.duration;
+        });
+    }
+    
+    createLightningStrike() {
+        // Random position in visible area (mobile optimized)
+        const screenBounds = {
+            left: this.camera.x,
+            right: this.camera.x + this.canvas.width / this.camera.scale,
+            top: this.camera.y,
+            bottom: this.camera.y + this.canvas.height / this.camera.scale
+        };
+        
+        const startX = screenBounds.left + Math.random() * (screenBounds.right - screenBounds.left);
+        const startY = screenBounds.top - 150; // Start above visible area
+        const endX = startX + (Math.random() - 0.5) * 200; // Less variance for mobile
+        const endY = screenBounds.bottom + 50; // End below visible area
+        
+        // Create lightning bolt (simplified for mobile)
+        const lightning = {
+            segments: this.generateLightningPath(startX, startY, endX, endY),
+            branches: this.generateLightningBranches(startX, startY, endX, endY),
+            color: `hsl(${200 + Math.random() * 60}, 100%, ${80 + Math.random() * 20}%)`,
+            width: 2 + Math.random() * 3, // Thinner for mobile
+            alpha: 1,
+            age: 0,
+            duration: 150 + Math.random() * 200, // Shorter duration
+            flash: {
+                intensity: 0.6 + Math.random() * 0.3, // Less intense flash
+                duration: 80 + Math.random() * 80,
+                age: 0
+            }
+        };
+        
+        this.lightningSystem.strikes.push(lightning);
+        
+        // Optional haptic feedback for mobile
+        if ('vibrate' in navigator) {
+            navigator.vibrate(50); // Short vibration
+        }
+    }
+    
+    generateLightningPath(startX, startY, endX, endY) {
+        const segments = [];
+        const numSegments = 12 + Math.floor(Math.random() * 10); // Fewer segments for mobile
+        
+        let currentX = startX;
+        let currentY = startY;
+        
+        for (let i = 0; i < numSegments; i++) {
+            const progress = i / numSegments;
+            const targetX = startX + (endX - startX) * progress;
+            const targetY = startY + (endY - startY) * progress;
+            
+            // Reduced jitter for mobile performance
+            const jitterX = (Math.random() - 0.5) * 30 * (1 - progress * 0.5);
+            const jitterY = (Math.random() - 0.5) * 20;
+            
+            const nextX = targetX + jitterX;
+            const nextY = targetY + jitterY;
+            
+            segments.push({
+                startX: currentX,
+                startY: currentY,
+                endX: nextX,
+                endY: nextY
+            });
+            
+            currentX = nextX;
+            currentY = nextY;
+        }
+        
+        return segments;
+    }
+    
+    generateLightningBranches(mainStartX, mainStartY, mainEndX, mainEndY) {
+        const branches = [];
+        const numBranches = 1 + Math.floor(Math.random() * 2); // Fewer branches for mobile
+        
+        for (let i = 0; i < numBranches; i++) {
+            const branchPoint = 0.3 + Math.random() * 0.4;
+            const branchStartX = mainStartX + (mainEndX - mainStartX) * branchPoint;
+            const branchStartY = mainStartY + (mainEndY - mainStartY) * branchPoint;
+            
+            const branchAngle = (Math.random() - 0.5) * Math.PI * 0.6;
+            const branchLength = 60 + Math.random() * 120; // Shorter branches
+            
+            const branchEndX = branchStartX + Math.cos(branchAngle) * branchLength;
+            const branchEndY = branchStartY + Math.sin(branchAngle) * branchLength;
+            
+            const branchSegments = this.generateLightningPath(branchStartX, branchStartY, branchEndX, branchEndY);
+            branches.push({
+                segments: branchSegments.slice(0, Math.max(3, branchSegments.length / 3)), // Much shorter
+                alpha: 0.5 + Math.random() * 0.3
+            });
+        }
+        
+        return branches;
+    }
+    
+    renderLightning() {
+        if (!this.lightningSystem.enabled || this.lightningSystem.strikes.length === 0) return;
+        
+        this.ctx.save();
+        
+        this.lightningSystem.strikes.forEach(lightning => {
+            this.ctx.globalAlpha = lightning.alpha;
+            this.ctx.strokeStyle = lightning.color;
+            this.ctx.lineWidth = lightning.width;
+            this.ctx.lineCap = 'round';
+            this.ctx.shadowColor = lightning.color;
+            this.ctx.shadowBlur = 6; // Reduced blur for mobile
+            
+            // Render main lightning bolt
+            this.ctx.beginPath();
+            lightning.segments.forEach((segment, index) => {
+                if (index === 0) {
+                    this.ctx.moveTo(segment.startX, segment.startY);
+                }
+                this.ctx.lineTo(segment.endX, segment.endY);
+            });
+            this.ctx.stroke();
+            
+            // Render branches (simplified)
+            lightning.branches.forEach(branch => {
+                this.ctx.globalAlpha = lightning.alpha * branch.alpha;
+                this.ctx.lineWidth = lightning.width * 0.5;
+                
+                this.ctx.beginPath();
+                branch.segments.forEach((segment, index) => {
+                    if (index === 0) {
+                        this.ctx.moveTo(segment.startX, segment.startY);
+                    }
+                    this.ctx.lineTo(segment.endX, segment.endY);
+                });
+                this.ctx.stroke();
+            });
+            
+            // Screen flash effect (reduced for mobile)
+            if (lightning.flash.age < lightning.flash.duration) {
+                const flashAlpha = (1 - (lightning.flash.age / lightning.flash.duration)) * lightning.flash.intensity * 0.2;
+                
+                this.ctx.save();
+                this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+                this.ctx.globalCompositeOperation = 'screen';
+                this.ctx.globalAlpha = flashAlpha;
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                this.ctx.restore();
+                
+                lightning.flash.age += 16;
+            }
+        });
+        
+        this.ctx.restore();
+    }
+    
+    renderSunRays(dayNightInfo) {
+        if (dayNightInfo.phase === 'night') return;
+        
+        this.ctx.save();
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+        
+        // Sun position on screen
+        const centerX = this.canvas.width / 2;
+        const centerY = this.canvas.height / 3;
+        
+        // Create sun rays gradient
+        const gradient = this.ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, Math.max(this.canvas.width, this.canvas.height));
+        gradient.addColorStop(0, dayNightInfo.sunColor);
+        gradient.addColorStop(0.3, `rgba(255, 220, 150, ${dayNightInfo.lightLevel * 0.02})`);
+        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        
+        this.ctx.globalCompositeOperation = 'lighter';
+        this.ctx.fillStyle = gradient;
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        this.ctx.restore();
+    }
+    
+    applyDayNightLighting(dayNightInfo) {
+        // Apply day/night overlay
+        this.ctx.save();
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+        
+        if (dayNightInfo.phase === 'night') {
+            // Night overlay
+            this.ctx.globalCompositeOperation = 'multiply';
+            this.ctx.fillStyle = `rgba(80, 80, 150, ${0.7 - dayNightInfo.lightLevel * 0.3})`;
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        } else if (dayNightInfo.phase === 'dawn' || dayNightInfo.phase === 'dusk') {
+            // Twilight overlay
+            const twilightColor = dayNightInfo.phase === 'dawn' ? 
+                `rgba(255, 180, 120, ${0.2 - dayNightInfo.lightLevel * 0.1})` :
+                `rgba(255, 120, 80, ${0.25 - dayNightInfo.lightLevel * 0.1})`;
+            
+            this.ctx.globalCompositeOperation = 'multiply';
+            this.ctx.fillStyle = twilightColor;
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        }
+        
+        this.ctx.restore();
+    }
+    
     render() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         
@@ -1996,6 +2340,10 @@ class MobileVikingSettlementTycoon {
         this.renderTerrain();
         this.renderBuildings();
         this.renderScouts();
+        
+        // Render lightning (in world space)
+        this.renderLightning();
+        
         this.renderFogOfWar();
         
         this.ctx.restore();
