@@ -92,9 +92,23 @@ class MobileVikingSettlementTycoon {
     }
     
     initSplashScreen() {
-        // Show animated splashscreen for 7 seconds
+        // Show animated splashscreen for 5 seconds with 60fps optimization
         const splashScreen = document.getElementById('splashScreen');
         const gameContainer = document.getElementById('gameContainer');
+        const splashGif = document.querySelector('.splash-gif');
+        
+        // Force hardware acceleration and optical flow for smooth playback
+        if (splashGif) {
+            splashGif.style.willChange = 'transform';
+            splashGif.style.transform = 'translateZ(0)';
+            splashGif.style.backfaceVisibility = 'hidden';
+            splashGif.style.imageRendering = '-webkit-optimize-contrast';
+            
+            // Enable optical flow smoothing if supported
+            if ('MSHyperlinkAuditingEnabled' in window || 'chrome' in window) {
+                splashGif.style.filter += ' contrast(1.05) saturate(1.05)';
+            }
+        }
         
         setTimeout(() => {
             // Fade out splashscreen
@@ -105,10 +119,15 @@ class MobileVikingSettlementTycoon {
                 splashScreen.style.display = 'none';
                 gameContainer.style.display = 'flex';
                 
+                // Clean up splash screen optimizations
+                if (splashGif) {
+                    splashGif.style.willChange = 'auto';
+                }
+                
                 // Initialize game after splashscreen
                 this.init();
             }, 500); // Wait for fade transition
-        }, 7000); // 7 second delay
+        }, 5000); // 5 second delay to prevent looping
     }
     
     collectDeviceInfo() {

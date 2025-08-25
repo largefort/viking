@@ -565,11 +565,28 @@ body {
 }
 
 .splash-gif {
-    max-width: 90%;
-    max-height: 90%;
+    max-width: 95vw;
+    max-height: 95vh;
     width: auto;
     height: auto;
     object-fit: contain;
+    filter: contrast(1.1) saturate(1.1);
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    animation: smoothGif 60s linear infinite;
+}
+
+@keyframes smoothGif {
+    0% { transform: translateZ(0); }
+    100% { transform: translateZ(0); }
+}
+
+/* Force 60fps rendering for splash screen */
+.splash-screen * {
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
 }
 
 /* Responsive Adjustments */
