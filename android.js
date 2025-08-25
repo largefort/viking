@@ -116,29 +116,10 @@ class MobileVikingSettlementTycoon {
         this.setupMobileUI();
         this.loadNearbyChunks();
         
-        // Enhanced settlers system for animated behavior
-        this.settlers = [];
-        this.maxSettlers = 20;
-        
-        // Ocean wave system
-        this.waveSystem = {
-            time: 0,
-            smallWaves: [],
-            largeWaves: [],
-            waveSpeed: 0.002,
-            amplitude: 3
-        };
-        this.initializeWaveSystem();
-        
-        // Firefly system for nighttime beauty
-        this.fireflies = [];
-        this.maxFireflies = 15; // Fewer for mobile performance
-        
         // Check for saved game
         const hasSavedGame = localStorage.getItem('vikingSettlementMobile');
         if (!hasSavedGame) {
             this.spawnInitialScout();
-            this.spawnInitialSettlers();
             // Remove automatic building placement for new players
             this.showMobileNotification('Welcome to Viking Settlement Tycoon! Build your settlement from scratch!', 'success');
         } else {
@@ -147,49 +128,6 @@ class MobileVikingSettlementTycoon {
         
         this.setupMobileEventListeners();
         this.gameLoop();
-    }
-
-    initializeWaveSystem() {
-        // Initialize small ripple waves
-        for (let i = 0; i < 8; i++) {
-            this.waveSystem.smallWaves.push({
-                offset: Math.random() * Math.PI * 2,
-                frequency: 0.05 + Math.random() * 0.03,
-                amplitude: 0.8 + Math.random() * 0.4,
-                speed: 0.001 + Math.random() * 0.001
-            });
-        }
-        
-        // Initialize large oceanic swells
-        for (let i = 0; i < 4; i++) {
-            this.waveSystem.largeWaves.push({
-                offset: Math.random() * Math.PI * 2,
-                frequency: 0.01 + Math.random() * 0.01,
-                amplitude: 2.0 + Math.random() * 1.0,
-                speed: 0.0005 + Math.random() * 0.0005
-            });
-        }
-    }
-    
-    spawnInitialSettlers() {
-        const centerX = this.camera.x + this.canvas.width / (2 * this.camera.scale);
-        const centerY = this.camera.y + this.canvas.height / (2 * this.camera.scale);
-        
-        for (let i = 0; i < 5; i++) {
-            this.settlers.push({
-                x: centerX + (Math.random() - 0.5) * 100,
-                y: centerY + (Math.random() - 0.5) * 100,
-                type: ['farmer', 'worker', 'child', 'gatherer'][Math.floor(Math.random() * 4)],
-                targetX: centerX,
-                targetY: centerY,
-                speed: 15 + Math.random() * 10,
-                activityTimer: 0,
-                activityDuration: 3000 + Math.random() * 5000,
-                carryingResource: null,
-                workBuilding: null,
-                age: Math.random() * 1000
-            });
-        }
     }
     
     setupCanvas() {
@@ -592,14 +530,18 @@ class MobileVikingSettlementTycoon {
     
     saveMobileGame() {
         try {
-            // Convert fog of war data to serializable format
+            // Convert fog of war data to serializable format (simplified approach)
             const fogOfWarData = {};
             for (const [chunkKey, fogData] of this.fogOfWar) {
                 try {
-                    fogOfWarData[chunkKey] = fogData.canvas.toDataURL();
-                } catch (e) {
-                    console.warn(`Failed to serialize fog data for chunk ${chunkKey}:`, e);
+                    // Only save if canvas exists and is valid
+                    if (fogData && fogData.canvas && fogData.canvas.width > 0) {
+                        fogOfWarData[chunkKey] = fogData.canvas.toDataURL();
+                    }
+                } catch (canvasError) {
+                    console.warn(`Failed to serialize fog canvas for chunk ${chunkKey}:`, canvasError);
                     // Skip this chunk's fog data
+                    continue;
                 }
             }
 
@@ -607,51 +549,88 @@ class MobileVikingSettlementTycoon {
                 version: this.gameVersion,
                 resources: this.resources,
                 population: this.population,
-                buildings: this.buildings,
-                camera: this.camera,
-                scouts: this.scouts,
+                buildings: this.buildings.map(building => ({
+                    type: building.type,
+                    x: building.x,
+                    y: building.y,
+                    level: building.level || 1,
+                    lastUpdate: building.lastUpdate || Date.now()
+                })),
+                camera: {
+                    x: this.camera.x,
+                    y: this.camera.y,
+                    scale: Math.max(0.3, Math.min(3, this.camera.scale))
+                },
+                scouts: this.scouts.map(scout => ({
+                    x: scout.x,
+                    y: scout.y,
+                    speed: scout.speed,
+                    health: scout.health || 100,
+                    range: scout.range || 40,
+                    exploring: false,
+                    target: null
+                })),
                 seed: this.seed,
                 exploredAreas: Array.from(this.exploredAreas),
                 fogOfWarData: fogOfWarData,
+                gameTime: this.gameTime || 0,
                 deviceInfo: this.deviceInfo,
                 saveTime: Date.now()
             };
             
-            // Try to serialize the game state
-            const serializedData = JSON.stringify(gameState);
-            
-            // Check if the data is too large for localStorage
-            if (serializedData.length > 5000000) { // ~5MB limit
-                console.warn('Save data too large, compressing...');
-                // Remove fog of war data to reduce size
-                delete gameState.fogOfWarData;
-                localStorage.setItem('vikingSettlementMobile', JSON.stringify(gameState));
-                this.showMobileNotification('Game saved (without fog data)', 'warning');
-            } else {
-                localStorage.setItem('vikingSettlementMobile', serializedData);
-                this.showMobileNotification('Game saved!', 'success');
+            // Test if the data can be stringified before saving
+            const testString = JSON.stringify(gameState);
+            if (testString.length > 5000000) { // 5MB limit
+                throw new Error('Save data too large');
             }
+            
+            localStorage.setItem('vikingSettlementMobile', testString);
+            this.showMobileNotification('Game saved!', 'success');
+            console.log('Mobile game saved successfully');
+            
         } catch (error) {
             console.error('Failed to save mobile game:', error);
             
-            // Try saving without fog of war data as fallback
+            // Try to save without fog of war data as fallback
             try {
-                const minimalGameState = {
+                const fallbackState = {
                     version: this.gameVersion,
                     resources: this.resources,
                     population: this.population,
-                    buildings: this.buildings,
-                    camera: this.camera,
-                    scouts: this.scouts,
+                    buildings: this.buildings.map(building => ({
+                        type: building.type,
+                        x: building.x,
+                        y: building.y,
+                        level: building.level || 1,
+                        lastUpdate: building.lastUpdate || Date.now()
+                    })),
+                    camera: {
+                        x: this.camera.x,
+                        y: this.camera.y,
+                        scale: Math.max(0.3, Math.min(3, this.camera.scale))
+                    },
+                    scouts: this.scouts.map(scout => ({
+                        x: scout.x,
+                        y: scout.y,
+                        speed: scout.speed,
+                        health: scout.health || 100,
+                        range: scout.range || 40,
+                        exploring: false,
+                        target: null
+                    })),
                     seed: this.seed,
                     exploredAreas: Array.from(this.exploredAreas),
+                    gameTime: this.gameTime || 0,
+                    deviceInfo: this.deviceInfo,
                     saveTime: Date.now()
                 };
                 
-                localStorage.setItem('vikingSettlementMobile', JSON.stringify(minimalGameState));
-                this.showMobileNotification('Game saved (minimal)', 'warning');
+                localStorage.setItem('vikingSettlementMobile', JSON.stringify(fallbackState));
+                this.showMobileNotification('Game saved (limited)!', 'warning');
+                console.log('Mobile game saved with fallback method');
+                
             } catch (fallbackError) {
-                console.error('Even fallback save failed:', fallbackError);
+                console.error('Fallback save also failed:', fallbackError);
                 this.showMobileNotification('Failed to save game!', 'error');
             }
         }
@@ -667,6 +646,7 @@ class MobileVikingSettlementTycoon {
             // Verify version compatibility
             if (!gameState.version || gameState.version !== this.gameVersion) {
                 console.warn('Version mismatch or missing version in save');
+                // Don't reject - attempt to load anyway with warning
                 this.showMobileNotification('Save version different, loading anyway...', 'warning');
             }
 
@@ -677,30 +657,74 @@ class MobileVikingSettlementTycoon {
                 return false;
             }
             
+            // Restore basic game state
             this.resources = gameState.resources || { food: 100, wood: 50, iron: 25, gold: 10 };
             this.population = gameState.population || 5;
-            this.buildings = gameState.buildings || [];
             
-            if (gameState.camera) {
-                this.camera = { ...gameState.camera };
+            // Restore buildings with proper data structure
+            this.buildings = [];
+            if (gameState.buildings && Array.isArray(gameState.buildings)) {
+                gameState.buildings.forEach(savedBuilding => {
+                    const buildingData = this.getBuildingData(savedBuilding.type);
+                    if (buildingData) {
+                        const building = {
+                            type: savedBuilding.type,
+                            x: savedBuilding.x,
+                            y: savedBuilding.y,
+                            level: savedBuilding.level || 1,
+                            lastUpdate: savedBuilding.lastUpdate || Date.now(),
+                            ...buildingData
+                        };
+                        this.buildings.push(building);
+                    }
+                });
             }
             
+            // Restore camera
+            if (gameState.camera) {
+                this.camera = {
+                    x: gameState.camera.x || 0,
+                    y: gameState.camera.y || 0,
+                    scale: Math.max(0.3, Math.min(3, gameState.camera.scale || 1))
+                };
+            }
+            
+            // Restore scouts
             this.scouts = [];
-            if (gameState.scouts && Array.isArray(gameState.scouts) && gameState.scouts.length > 0) {
-                this.scouts = gameState.scouts;
-            } else {
+            if (gameState.scouts && Array.isArray(gameState.scouts)) {
+                gameState.scouts.forEach(savedScout => {
+                    const scout = {
+                        x: savedScout.x || 0,
+                        y: savedScout.y || 0,
+                        speed: savedScout.speed || 20,
+                        health: savedScout.health || 100,
+                        range: savedScout.range || 40,
+                        exploring: false,
+                        target: null
+                    };
+                    this.scouts.push(scout);
+                });
+            }
+            
+            // Ensure at least one scout exists
+            if (this.scouts.length === 0) {
                 this.spawnInitialScout();
             }
             
-            if (gameState.seed !== undefined) {
+            // Restore other properties
+            if (typeof gameState.seed === 'number') {
                 this.seed = gameState.seed;
+            }
+            
+            if (typeof gameState.gameTime === 'number') {
+                this.gameTime = gameState.gameTime;
             }
             
             if (gameState.exploredAreas && Array.isArray(gameState.exploredAreas)) {
                 this.exploredAreas = new Set(gameState.exploredAreas);
             }
             
-            // Load chunks first
+            // Load chunks after restoring state
             this.loadNearbyChunks();
             
             // Restore fog of war data if available
@@ -711,21 +735,24 @@ class MobileVikingSettlementTycoon {
                 this.restoreFogOfWar();
             }
             
+            // Update displays
             this.updateMobileResourceDisplay();
             this.updateMobilePopulationDisplay();
             this.updateMobileStatsDisplay();
             
             this.showMobileNotification('Game loaded!', 'success');
+            console.log('Mobile game loaded successfully');
             return true;
+            
         } catch (error) {
             console.error('Failed to load mobile game:', error);
-            this.showMobileNotification('Failed to load save!', 'error');
             
-            // Clear corrupted save
+            // Try to recover by removing corrupted save
             try {
                 localStorage.removeItem('vikingSettlementMobile');
-            } catch (clearError) {
-                console.error('Failed to clear corrupted save:', clearError);
+                this.showMobileNotification('Corrupted save removed, starting fresh', 'warning');
+            } catch (cleanupError) {
+                console.error('Failed to cleanup corrupted save:', cleanupError);
             }
             
             return false;
@@ -737,35 +764,32 @@ class MobileVikingSettlementTycoon {
             // Check if required fields exist and are of correct type
             if (!gameState || typeof gameState !== 'object') return false;
             if (typeof gameState.resources !== 'object' || gameState.resources === null) return false;
-            if (typeof gameState.population !== 'number' || isNaN(gameState.population)) return false;
+            if (typeof gameState.population !== 'number' || !isFinite(gameState.population)) return false;
             if (!Array.isArray(gameState.buildings)) return false;
             if (typeof gameState.camera !== 'object' || gameState.camera === null) return false;
             if (!Array.isArray(gameState.scouts)) return false;
-            if (typeof gameState.seed !== 'number' || isNaN(gameState.seed)) return false;
+            if (typeof gameState.seed !== 'number' || !isFinite(gameState.seed)) return false;
             
             // Validate resources
             const requiredResources = ['food', 'wood', 'iron', 'gold'];
             for (const resource of requiredResources) {
-                if (typeof gameState.resources[resource] !== 'number' || isNaN(gameState.resources[resource])) {
+                if (typeof gameState.resources[resource] !== 'number' || !isFinite(gameState.resources[resource])) {
                     return false;
                 }
             }
             
             // Validate camera
-            if (typeof gameState.camera.x !== 'number' || isNaN(gameState.camera.x) ||
-                typeof gameState.camera.y !== 'number' || isNaN(gameState.camera.y) ||
-                typeof gameState.camera.scale !== 'number' || isNaN(gameState.camera.scale)) {
+            if (typeof gameState.camera.x !== 'number' || !isFinite(gameState.camera.x) ||
+                typeof gameState.camera.y !== 'number' || !isFinite(gameState.camera.y) ||
+                typeof gameState.camera.scale !== 'number' || !isFinite(gameState.camera.scale)) {
                 return false;
             }
             
             // Validate buildings array
-            if (!Array.isArray(gameState.buildings)) return false;
-            for (const building of gameState.buildings) {
-                if (!building || typeof building !== 'object') return false;
-                if (typeof building.x !== 'number' || isNaN(building.x)) return false;
-                if (typeof building.y !== 'number' || isNaN(building.y)) return false;
-                if (typeof building.type !== 'string') return false;
-            }
+            if (gameState.buildings.length > 1000) return false; // Sanity check
+            
+            // Validate scouts array  
+            if (gameState.scouts.length > 100) return false; // Sanity check
             
             return true;
         } catch (error) {
@@ -776,28 +800,29 @@ class MobileVikingSettlementTycoon {
 
     restoreFogOfWarFromSave(fogOfWarData) {
         try {
-            const loadPromises = [];
+            let restoredCount = 0;
+            const maxRestore = 50; // Limit restoration for performance
             
             for (const [chunkKey, dataURL] of Object.entries(fogOfWarData)) {
-                if (typeof dataURL !== 'string' || !dataURL.startsWith('data:image/')) {
-                    console.warn(`Invalid fog data for chunk ${chunkKey}`);
-                    continue;
-                }
+                if (restoredCount >= maxRestore) break;
                 
-                const promise = new Promise((resolve) => {
-                    const img = new Image();
+                try {
+                    // Validate chunk key format
+                    const chunkCoords = chunkKey.split(',');
+                    if (chunkCoords.length !== 2) continue;
                     
+                    const chunkX = parseInt(chunkCoords[0]);
+                    const chunkY = parseInt(chunkCoords[1]);
+                    
+                    if (!isFinite(chunkX) || !isFinite(chunkY)) continue;
+                    
+                    // Create image from saved data
+                    const img = new Image();
                     img.onload = () => {
                         try {
                             // Get or create fog canvas for this chunk
                             let fogData = this.fogOfWar.get(chunkKey);
                             if (!fogData) {
-                                const [chunkX, chunkY] = chunkKey.split(',').map(Number);
-                                if (isNaN(chunkX) || isNaN(chunkY)) {
-                                    console.warn(`Invalid chunk coordinates: ${chunkKey}`);
-                                    resolve();
-                                    return;
-                                }
                                 this.initializeChunkFogOfWar(chunkX, chunkY);
                                 fogData = this.fogOfWar.get(chunkKey);
                             }
@@ -807,38 +832,26 @@ class MobileVikingSettlementTycoon {
                                 fogData.ctx.clearRect(0, 0, this.chunkSize, this.chunkSize);
                                 fogData.ctx.drawImage(img, 0, 0);
                             }
-                        } catch (error) {
-                            console.warn(`Failed to restore fog for chunk ${chunkKey}:`, error);
+                        } catch (drawError) {
+                            console.warn(`Failed to restore fog for chunk ${chunkKey}:`, drawError);
                         }
-                        resolve();
                     };
                     
                     img.onerror = () => {
-                        console.warn(`Failed to load fog image for chunk ${chunkKey}`);
-                        resolve();
+                        console.warn(`Invalid fog data for chunk ${chunkKey}`);
                     };
                     
-                    // Set timeout to prevent hanging
-                    setTimeout(() => {
-                        console.warn(`Timeout loading fog data for chunk ${chunkKey}`);
-                        resolve();
-                    }, 5000);
-                    
-                    img.src = dataURL;
-                });
-                
-                loadPromises.push(promise);
+                    if (typeof dataURL === 'string' && dataURL.startsWith('data:image')) {
+                        img.src = dataURL;
+                        restoredCount++;
+                    }
+                } catch (chunkError) {
+                    console.warn(`Failed to process fog chunk ${chunkKey}:`, chunkError);
+                    continue;
+                }
             }
             
-            // Wait for all fog data to load (with timeout)
-            Promise.all(loadPromises).then(() => {
-                console.log('Fog of war restoration completed');
-            }).catch((error) => {
-                console.error('Error during fog restoration:', error);
-                // Fallback to basic restoration
-                this.restoreFogOfWar();
-            });
-            
+            console.log(`Restored fog of war for ${restoredCount} chunks`);
         } catch (error) {
             console.error('Failed to restore mobile fog of war:', error);
             // Fallback to basic restoration
@@ -1047,56 +1060,45 @@ class MobileVikingSettlementTycoon {
     }
     
     getBiomeAt(x, y) {
-        // Enhanced biome determination with new types
-        const scale = 0.003;
+        // Generate multiple noise layers for biome determination
+        const scale = 0.003; // Larger biomes
         const temperatureNoise = this.seededNoise(x * scale + this.seed, y * scale + this.seed);
         const moistureNoise = this.seededNoise(x * scale + this.seed + 1000, y * scale + this.seed + 1000);
         const elevationNoise = this.seededNoise(x * scale * 0.5 + this.seed + 2000, y * scale * 0.5 + this.seed + 2000);
-        const volcanicNoise = this.seededNoise(x * scale * 0.8 + this.seed + 3000, y * scale * 0.8 + this.seed + 3000);
         
+        // Normalize to 0-1 range
         const temperature = (temperatureNoise + 1) * 0.5;
         const moisture = (moistureNoise + 1) * 0.5;
         const elevation = (elevationNoise + 1) * 0.5;
-        const volcanic = (volcanicNoise + 1) * 0.5;
         
+        // Determine primary biome based on temperature, moisture, and elevation
         let primaryBiome = 'temperate_plains';
+        let biomeStrength = 1.0;
         
-        // Polar ice seas (extremely cold, high moisture)
-        if (temperature < 0.15) {
-            primaryBiome = 'polar_ice';
-        }
-        // Arctic tundra (very cold)
-        else if (temperature < 0.25) {
+        // Arctic conditions (cold)
+        if (temperature < 0.3) {
             primaryBiome = 'arctic_tundra';
         }
-        // Volcanic regions (high volcanic activity)
-        else if (volcanic > 0.8) {
-            primaryBiome = 'volcanic_region';
-        }
-        // Tropical forests (hot, wet)
-        else if (temperature > 0.75 && moisture > 0.6) {
-            primaryBiome = 'tropical_forest';
-        }
-        // Boreal forests (cold, wet)
+        // Cold forest conditions
         else if (temperature < 0.5 && moisture > 0.4) {
             primaryBiome = 'boreal_forest';
         }
-        // Mountain regions
+        // Mountainous regions
         else if (elevation > 0.7) {
             primaryBiome = 'highland_mountains';
         }
-        // Fjord landscapes (high moisture, moderate temp, medium elevation)
-        else if (moisture > 0.6 && temperature > 0.4 && temperature < 0.7 && elevation > 0.3 && elevation < 0.6) {
+        // Coastal areas (high moisture, moderate temperature)
+        else if (moisture > 0.6 && temperature > 0.4 && temperature < 0.7) {
             primaryBiome = 'coastal_fjords';
         }
-        // Grassland meadows (moderate conditions)
-        else if (moisture > 0.3 && moisture < 0.7 && temperature > 0.4 && temperature < 0.8) {
-            primaryBiome = 'grassland_meadows';
+        // Default temperate plains
+        else {
+            primaryBiome = 'temperate_plains';
         }
         
         // Calculate transition zones between biomes
-        const transitionNoise = this.seededNoise(x * 0.01 + this.seed + 4000, y * 0.01 + this.seed + 4000);
-        const biomeStrength = Math.max(0.3, Math.min(1.0, 1.0 + transitionNoise * 0.3));
+        const transitionNoise = this.seededNoise(x * 0.01 + this.seed + 3000, y * 0.01 + this.seed + 3000);
+        biomeStrength = Math.max(0.3, Math.min(1.0, biomeStrength + transitionNoise * 0.3));
         
         return {
             primary: primaryBiome,
@@ -1104,7 +1106,7 @@ class MobileVikingSettlementTycoon {
             temperature,
             moisture,
             elevation,
-            volcanic
+            transitionNoise
         };
     }
     
@@ -1112,38 +1114,26 @@ class MobileVikingSettlementTycoon {
         const detailNoise = this.seededNoise(x * 0.02 + this.seed, y * 0.02 + this.seed);
         const microNoise = this.seededNoise(x * 0.05 + this.seed + 500, y * 0.05 + this.seed + 500);
         
-        // Enhanced biome generation with volcanic and polar regions
+        // Base terrain generation based on biome
         switch (biomeData.primary) {
             case 'arctic_tundra':
                 return this.generateArcticTerrain(biomeData, detailNoise, microNoise);
             
             case 'boreal_forest':
                 return this.generateBorealTerrain(biomeData, detailNoise, microNoise);
-                
-            case 'tropical_forest':
-                return this.generateTropicalTerrain(biomeData, detailNoise, microNoise);
             
             case 'coastal_fjords':
                 return this.generateCoastalTerrain(biomeData, detailNoise, microNoise);
-                
-            case 'volcanic_region':
-                return this.generateVolcanicTerrain(biomeData, detailNoise, microNoise);
-                
-            case 'polar_ice':
-                return this.generatePolarTerrain(biomeData, detailNoise, microNoise);
             
             case 'highland_mountains':
                 return this.generateMountainTerrain(biomeData, detailNoise, microNoise);
-                
-            case 'grassland_meadows':
-                return this.generateMeadowTerrain(biomeData, detailNoise, microNoise);
             
             case 'temperate_plains':
             default:
                 return this.generateTemperateTerrain(biomeData, detailNoise, microNoise);
         }
     }
-
+    
     generateArcticTerrain(biomeData, detailNoise, microNoise) {
         // Arctic tundra: mostly snow, some ice, sparse vegetation
         if (biomeData.elevation < 0.2) {
@@ -1168,48 +1158,32 @@ class MobileVikingSettlementTycoon {
         return microNoise > 0 ? 'conifer_forest' : 'boreal_clearing';
     }
     
-    generateTropicalTerrain(biomeData, detailNoise, microNoise) {
-        if (biomeData.elevation < 0.2 && biomeData.moisture > 0.7) {
-            return detailNoise < -0.3 ? 'tropical_lagoon' : 'mangrove_swamp';
-        } else if (biomeData.moisture > 0.6) {
-            return detailNoise > 0.2 ? 'dense_tropical_forest' : 'tropical_rainforest';
-        } else if (biomeData.elevation > 0.6) {
-            return 'tropical_plateau';
-        }
-        return microNoise > 0 ? 'tropical_grassland' : 'palm_grove';
-    }
-    
-    generateVolcanicTerrain(biomeData, detailNoise, microNoise) {
-        if (biomeData.elevation > 0.8) {
-            return detailNoise > 0.3 ? 'volcanic_peak' : 'lava_flow';
-        } else if (biomeData.elevation > 0.5) {
-            return microNoise > 0.2 ? 'volcanic_slope' : 'obsidian_field';
-        } else if (biomeData.temperature > 0.7) {
-            return 'hot_springs';
-        }
-        return detailNoise > 0 ? 'volcanic_ash' : 'pumice_field';
-    }
-    
-    generatePolarTerrain(biomeData, detailNoise, microNoise) {
+    generateCoastalTerrain(biomeData, detailNoise, microNoise) {
+        // Coastal fjords: water bodies, beaches, coastal forests, cliffs
         if (biomeData.elevation < 0.1) {
-            return 'polar_ocean';
-        } else if (biomeData.elevation < 0.3) {
-            return detailNoise < -0.2 ? 'sea_ice' : 'ice_shelf';
-        } else if (microNoise > 0.4) {
-            return 'glacier';
+            return 'deep_fjord_water';
+        } else if (biomeData.elevation < 0.25) {
+            return detailNoise < 0 ? 'shallow_water' : 'rocky_shore';
+        } else if (biomeData.elevation < 0.4 && biomeData.moisture > 0.5) {
+            return microNoise > 0.2 ? 'coastal_forest' : 'beach';
+        } else if (biomeData.elevation > 0.7) {
+            return 'sea_cliff';
         }
-        return 'frozen_tundra';
+        return detailNoise > 0.1 ? 'coastal_grass' : 'beach';
     }
     
-    generateMeadowTerrain(biomeData, detailNoise, microNoise) {
-        if (biomeData.elevation < 0.2 && biomeData.moisture > 0.6) {
-            return 'meadow_stream';
-        } else if (biomeData.moisture > 0.4) {
-            return detailNoise > 0.1 ? 'wildflower_meadow' : 'rolling_grassland';
-        } else if (microNoise > 0.3) {
-            return 'prairie_grass';
+    generateMountainTerrain(biomeData, detailNoise, microNoise) {
+        // Highland mountains: peaks, alpine meadows, rocky slopes
+        if (biomeData.elevation > 0.9) {
+            return biomeData.temperature < 0.3 ? 'snow_peak' : 'rocky_peak';
+        } else if (biomeData.elevation > 0.7) {
+            return detailNoise > 0.3 ? 'alpine_forest' : 'rocky_slope';
+        } else if (biomeData.elevation > 0.5) {
+            return microNoise > 0.2 ? 'mountain_forest' : 'alpine_meadow';
+        } else if (biomeData.moisture > 0.6) {
+            return 'mountain_stream';
         }
-        return 'meadow_grass';
+        return 'hills';
     }
     
     generateTemperateTerrain(biomeData, detailNoise, microNoise) {
@@ -1466,143 +1440,54 @@ class MobileVikingSettlementTycoon {
     }
     
     drawEnhancedWaterTile(ctx, x, y, size, deep, mid, light) {
-        // Enhanced water with Perlin noise wave simulation
-        this.waveSystem.time += 0.016;
+        // Create realistic water with depth variation
+        const gradient = ctx.createRadialGradient(x + size/2, y + size/2, 0, x + size/2, y + size/2, size);
+        gradient.addColorStop(0, light);
+        gradient.addColorStop(0.5, mid);
+        gradient.addColorStop(1, deep);
+        ctx.fillStyle = gradient;
+        ctx.fillRect(x, y, size, size);
         
-        // Calculate wave height at this position
-        let waveHeight = 0;
-        
-        // Small ripples
-        this.waveSystem.smallWaves.forEach(wave => {
-            const waveX = x * wave.frequency + this.waveSystem.time * wave.speed + wave.offset;
-            const waveY = y * wave.frequency + this.waveSystem.time * wave.speed * 0.7 + wave.offset;
-            waveHeight += Math.sin(waveX) * Math.cos(waveY) * wave.amplitude;
-        });
-        
-        // Large oceanic swells
-        this.waveSystem.largeWaves.forEach(wave => {
-            const waveX = x * wave.frequency + this.waveSystem.time * wave.speed + wave.offset;
-            const waveY = y * wave.frequency + this.waveSystem.time * wave.speed * 1.3 + wave.offset;
-            waveHeight += Math.sin(waveX) * Math.sin(waveY) * wave.amplitude;
-        });
-        
-        // Normalize wave height
-        waveHeight = Math.max(-3, Math.min(3, waveHeight));
-        
-        // Create depth-based water rendering
-        const depthVariation = 0.5 + (waveHeight + 3) / 12; // Convert to 0-1 range
-        
-        // Shallow water (transparent with visible seabed)
-        if (depthVariation < 0.3) {
-            // Seabed
-            ctx.fillStyle = '#d2b48c';
-            ctx.fillRect(x, y, size, size);
-            
-            // Transparent shallow water
-            const alpha = 0.3 + depthVariation * 0.4;
-            ctx.fillStyle = `rgba(64, 164, 223, ${alpha})`;
-            ctx.fillRect(x, y, size, size);
-        } else {
-            // Deep ocean with darker gradients
-            const darkness = Math.min(0.8, depthVariation);
-            const deepColor = this.interpolateColor('#1565c0', '#0d47a1', darkness);
-            const midColor = this.interpolateColor('#1976d2', '#1565c0', darkness);
-            const lightColor = this.interpolateColor('#42a5f5', '#1976d2', darkness);
-            
-            const gradient = ctx.createRadialGradient(x + size/2, y + size/2, 0, x + size/2, y + size/2, size);
-            gradient.addColorStop(0, lightColor);
-            gradient.addColorStop(0.5, midColor);
-            gradient.addColorStop(1, deepColor);
-            ctx.fillStyle = gradient;
-            ctx.fillRect(x, y, size, size);
-        }
-        
-        // Water surface effects
+        // Water movement patterns (mobile optimized)
         ctx.save();
-        ctx.globalAlpha = 0.4;
-        
-        // Wave highlights
-        if (waveHeight > 0) {
-            ctx.fillStyle = `rgba(255, 255, 255, ${waveHeight / 6})`;
-            ctx.fillRect(x, y + Math.floor(waveHeight), size, Math.max(1, Math.floor(size / 8)));
+        ctx.globalAlpha = 0.3;
+        ctx.fillStyle = light;
+        for (let i = 0; i < Math.max(1, Math.floor(size / 8)); i++) {
+            const waveX = x + (Math.sin((x + y + Date.now() * 0.001) * 0.02 + i) * 2);
+            const waveY = y + (Math.cos((x + y + Date.now() * 0.001) * 0.02 + i) * 2);
+            ctx.fillRect(waveX, waveY, size * 0.6, 1);
         }
-        
-        // Wave foam
-        if (waveHeight > 1.5) {
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-            for (let i = 0; i < 3; i++) {
-                const foamX = x + Math.random() * size;
-                const foamY = y + Math.random() * size;
-                ctx.beginPath();
-                ctx.arc(foamX, foamY, Math.max(1, waveHeight / 3), 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
-        
         ctx.restore();
-    }
-
-    interpolateColor(color1, color2, factor) {
-        // Convert hex to RGB
-        const hex1 = color1.slice(1);
-        const hex2 = color2.slice(1);
-        
-        const r1 = parseInt(hex1.substr(0, 2), 16);
-        const g1 = parseInt(hex1.substr(2, 2), 16);
-        const b1 = parseInt(hex1.substr(4, 2), 16);
-        
-        const r2 = parseInt(hex2.substr(0, 2), 16);
-        const g2 = parseInt(hex2.substr(2, 2), 16);
-        const b2 = parseInt(hex2.substr(4, 2), 16);
-        
-        const r = Math.round(r1 + (r2 - r1) * factor);
-        const g = Math.round(g1 + (g2 - g1) * factor);
-        const b = Math.round(b1 + (b2 - b1) * factor);
-        
-        return `rgb(${r}, ${g}, ${b})`;
     }
     
     drawEnhancedBeachTile(ctx, x, y, size, moisture) {
         // Varied sand colors based on moisture
-        const baseColor = moisture > 0.5 ? '#9ccc65' : '#8bc34a';
-        const lightColor = moisture > 0.5 ? '#aed581' : '#9ccc65';
-        const darkColor = '#689f38';
+        const sandColor = moisture > 0 ? '#d4c27a' : '#f5e6a3';
+        const darkSand = moisture > 0 ? '#c4b26a' : '#e6d28a';
         
-        // Base gradient
-        const gradient = ctx.createRadialGradient(x + size/2, y + size/2, 0, x + size/2, y + size/2, size);
-        gradient.addColorStop(0, lightColor);
-        gradient.addColorStop(0.7, baseColor);
-        gradient.addColorStop(1, darkColor);
+        const gradient = ctx.createLinearGradient(x, y, x + size, y + size);
+        gradient.addColorStop(0, sandColor);
+        gradient.addColorStop(1, darkSand);
         ctx.fillStyle = gradient;
         ctx.fillRect(x, y, size, size);
         
-        // Coastal grass patches (hardy, wind-bent)
-        ctx.globalAlpha = 0.7;
-        ctx.fillStyle = darkColor;
-        for (let i = 0; i < Math.max(3, Math.floor(size / 5)); i++) {
-            const grassX = x + Math.random() * size;
-            const grassY = y + Math.random() * size;
-            const grassSize = Math.max(1, 1 + Math.random() * 2);
-            // Slightly bent grass (coastal wind effect)
-            ctx.fillRect(grassX, grassY, grassSize, Math.max(2, size / 6));
-            ctx.fillRect(grassX + 1, grassY - 1, 1, Math.max(1, size / 8));
-        }
-        ctx.globalAlpha = 1;
-        
-        // Salt-resistant plants
-        if (moisture < 0.4 && Math.random() < 0.15) {
-            ctx.fillStyle = '#cddc39';
-            const plantX = x + size * 0.3 + Math.random() * size * 0.4;
-            const plantY = y + size * 0.3 + Math.random() * size * 0.4;
+        // Sand texture with varied grain sizes (mobile optimized)
+        ctx.fillStyle = darkSand;
+        for (let i = 0; i < Math.max(6, Math.floor(size * 0.6)); i++) {
+            const dotX = x + Math.random() * size;
+            const dotY = y + Math.random() * size;
+            const radius = Math.max(0.5, 0.5 + Math.random() * 1);
             ctx.beginPath();
-            ctx.arc(plantX, plantY, Math.max(1, size / 20), 0, Math.PI * 2);
+            ctx.arc(dotX, dotY, radius, 0, Math.PI * 2);
             ctx.fill();
         }
         
-        // Occasional driftwood or beach debris
-        if (Math.random() < 0.08) {
-            ctx.fillStyle = '#8d6e63';
-            ctx.fillRect(x + size * 0.6, y + size * 0.7, Math.max(2, size / 8), Math.max(1, size / 16));
+        // Occasional shells or debris
+        if (Math.random() < 0.1) {
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(x + size * 0.7, y + size * 0.3, Math.max(1, size / 16), 0, Math.PI * 2);
+            ctx.fill();
         }
     }
     
@@ -1879,71 +1764,64 @@ class MobileVikingSettlementTycoon {
         }
     }
     
-    drawDeepFjordTile(ctx, x, y, size) {
-        const gradient = ctx.createLinearGradient(x, y, x, y + size);
-        gradient.addColorStop(0, '#191970');
-        gradient.addColorStop(0.5, '#4169e1');
-        gradient.addColorStop(1, '#0000cd');
-        ctx.fillStyle = gradient;
+    drawSnowPeakTile(ctx, x, y, size, detailNoise) {
+        ctx.fillStyle = '#fffafa';
         ctx.fillRect(x, y, size, size);
         
-        // Deep water effects
-        ctx.fillStyle = '#4169e1';
-        ctx.globalAlpha = 0.3;
-        for (let i = 0; i < 3; i++) {
-            const waveY = y + i * size/3 + Math.sin(Date.now() * 0.001 + i) * 2;
-            ctx.fillRect(x, waveY, size, 2);
-        }
-        ctx.globalAlpha = 1;
-    }
-    
-    drawRockyShoreTile(ctx, x, y, size, detailNoise) {
-        ctx.fillStyle = '#696969';
-        ctx.fillRect(x, y, size, size);
+        // Mountain peak shape (mobile optimized)
+        ctx.fillStyle = '#f0f8ff';
+        ctx.beginPath();
+        ctx.moveTo(x + size/2, y);
+        ctx.lineTo(x, y + size);
+        ctx.lineTo(x + size, y + size);
+        ctx.closePath();
+        ctx.fill();
         
-        // Rocky shore elements
-        ctx.fillStyle = '#2f4f4f';
-        for (let i = 0; i < 6; i++) {
-            const rockX = x + Math.random() * size;
-            const rockY = y + Math.random() * size;
-            const rockSize = 3 + Math.random() * 5;
+        // Snow drifts
+        ctx.fillStyle = '#ffffff';
+        const driftCount = Math.max(2, Math.floor(size / 6));
+        for (let i = 0; i < driftCount; i++) {
+            const driftX = x + Math.random() * size;
+            const driftY = y + Math.random() * size;
+            const driftSize = Math.max(1, size / 12);
             ctx.beginPath();
-            ctx.arc(rockX, rockY, rockSize, 0, Math.PI * 2);
+            ctx.ellipse(driftX, driftY, driftSize, driftSize/2, Math.random() * Math.PI, 0, Math.PI * 2);
             ctx.fill();
         }
-        
-        // Seaweed patches
-        if (detailNoise > 0.1) {
-            ctx.fillStyle = '#006400';
-            ctx.fillRect(x + size * 0.2, y + size * 0.8, 3, 6);
-            ctx.fillRect(x + size * 0.7, y + size * 0.6, 2, 5);
-        }
     }
     
-    drawSeaCliffTile(ctx, x, y, size, detailNoise) {
+    drawRockyPeakTile(ctx, x, y, size, detailNoise) {
         const gradient = ctx.createLinearGradient(x, y, x, y + size);
-        gradient.addColorStop(0, '#d3d3d3');
-        gradient.addColorStop(0.6, '#a9a9a9');
+        gradient.addColorStop(0, '#dcdcdc');
+        gradient.addColorStop(0.5, '#a9a9a9');
         gradient.addColorStop(1, '#696969');
         ctx.fillStyle = gradient;
         ctx.fillRect(x, y, size, size);
         
-        // Cliff face detail
-        ctx.strokeStyle = '#2f4f4f';
-        ctx.lineWidth = 1;
-        for (let i = 0; i < 4; i++) {
+        // Rocky peak formations (mobile optimized)
+        ctx.fillStyle = '#757575';
+        const rockCount = Math.max(1, Math.floor(size / 10));
+        for (let i = 0; i < rockCount; i++) {
+            const rockX = x + (i % 2) * size/2 + Math.random() * size/2;
+            const rockY = y + Math.floor(i / 2) * size/2 + Math.random() * size/2;
+            const rockSize = Math.max(2, 2 + Math.random() * (size / 8));
+            
+            // Main rock formation
             ctx.beginPath();
-            ctx.moveTo(x, y + i * size/4);
-            ctx.lineTo(x + size, y + i * size/4 + Math.random() * 4 - 2);
-            ctx.stroke();
+            ctx.moveTo(rockX, rockY);
+            ctx.lineTo(rockX + rockSize * 0.6, rockY - rockSize);
+            ctx.lineTo(rockX + rockSize, rockY - rockSize * 0.3);
+            ctx.lineTo(rockX + rockSize * 1.2, rockY);
+            ctx.closePath();
+            ctx.fill();
         }
         
-        // Seabirds
-        if (detailNoise > 0.4) {
-            ctx.fillStyle = '#ffffff';
-            ctx.font = '8px Arial';
-            ctx.fillText('ᵛ', x + size * 0.7, y + size * 0.3);
-            ctx.fillText('ᵛ', x + size * 0.5, y + size * 0.2);
+        // Snow caps on high peaks
+        if (detailNoise > 0.3) {
+            ctx.fillStyle = '#fafafa';
+            ctx.beginPath();
+            ctx.arc(x + size * 0.3, y + size * 0.2, Math.max(1, size / 20), 0, Math.PI);
+            ctx.fill();
         }
     }
     
@@ -2256,7 +2134,6 @@ class MobileVikingSettlementTycoon {
             
             this.loadNearbyChunks();
             this.spawnInitialScout();
-            this.spawnInitialSettlers();
             
             this.updateMobileResourceDisplay();
             this.updateMobilePopulationDisplay();
@@ -2346,14 +2223,6 @@ class MobileVikingSettlementTycoon {
         // Update game time for day/night cycle
         this.gameTime += (deltaTime / 1000) * this.timeSpeed;
         
-        const dayNightInfo = this.getDayNightInfo();
-        
-        // Update fireflies only during night
-        this.updateFireflies(deltaTime, dayNightInfo);
-        
-        // Update animated settlers
-        this.updateSettlers(deltaTime);
-        
         this.loadNearbyChunks();
         
         const now = Date.now();
@@ -2381,226 +2250,6 @@ class MobileVikingSettlementTycoon {
         
         this.updateMobileResourceDisplay();
         this.updateMobilePopulationDisplay();
-    }
-    
-    updateFireflies(deltaTime, dayNightInfo) {
-        // Only spawn and update fireflies during night time
-        if (dayNightInfo.phase === 'night') {
-            // Spawn fireflies if we don't have enough
-            while (this.fireflies.length < this.maxFireflies) {
-                const screenBounds = {
-                    left: this.camera.x,
-                    right: this.camera.x + this.canvas.width / this.camera.scale,
-                    top: this.camera.y,
-                    bottom: this.camera.y + this.canvas.height / this.camera.scale
-                };
-                
-                this.fireflies.push({
-                    x: screenBounds.left + Math.random() * (screenBounds.right - screenBounds.left),
-                    y: screenBounds.top + Math.random() * (screenBounds.bottom - screenBounds.top),
-                    vx: (Math.random() - 0.5) * 20, // Slow movement
-                    vy: (Math.random() - 0.5) * 20,
-                    brightness: 0.3 + Math.random() * 0.7,
-                    pulseSpeed: 0.001 + Math.random() * 0.002, // Slow pulsing
-                    pulseTime: Math.random() * Math.PI * 2,
-                    size: 1 + Math.random() * 2
-                });
-            }
-            
-            // Update existing fireflies
-            this.fireflies.forEach(firefly => {
-                // Move firefly
-                firefly.x += firefly.vx * (deltaTime / 1000);
-                firefly.y += firefly.vy * (deltaTime / 1000);
-                
-                // Update pulsing
-                firefly.pulseTime += firefly.pulseSpeed * deltaTime;
-                firefly.brightness = 0.3 + 0.4 * (0.5 + 0.5 * Math.sin(firefly.pulseTime));
-                
-                // Gentle direction change
-                if (Math.random() < 0.01) {
-                    firefly.vx += (Math.random() - 0.5) * 10;
-                    firefly.vy += (Math.random() - 0.5) * 10;
-                    
-                    // Limit speed
-                    const speed = Math.sqrt(firefly.vx * firefly.vx + firefly.vy * firefly.vy);
-                    if (speed > 30) {
-                        firefly.vx = (firefly.vx / speed) * 30;
-                        firefly.vy = (firefly.vy / speed) * 30;
-                    }
-                }
-            });
-            
-            // Keep fireflies in visible area
-            const screenBounds = {
-                left: this.camera.x - 100,
-                right: this.camera.x + this.canvas.width / this.camera.scale + 100,
-                top: this.camera.y - 100,
-                bottom: this.camera.y + this.canvas.height / this.camera.scale + 100
-            };
-            
-            this.fireflies = this.fireflies.filter(firefly => {
-                return firefly.x >= screenBounds.left && firefly.x <= screenBounds.right &&
-                       firefly.y >= screenBounds.top && firefly.y <= screenBounds.bottom;
-            });
-        } else {
-            // Clear fireflies during day
-            this.fireflies = [];
-        }
-    }
-    
-    updateSettlers(deltaTime) {
-        this.settlers.forEach(settler => {
-            settler.age += deltaTime;
-            settler.activityTimer += deltaTime;
-            
-            // Update settler behavior based on type and surroundings
-            if (settler.activityTimer >= settler.activityDuration) {
-                this.assignSettlerActivity(settler);
-                settler.activityTimer = 0;
-                settler.activityDuration = 2000 + Math.random() * 6000;
-            }
-            
-            // Move toward target
-            const dx = settler.targetX - settler.x;
-            const dy = settler.targetY - settler.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            
-            if (distance > 5) {
-                const moveX = (dx / distance) * settler.speed * (deltaTime / 1000);
-                const moveY = (dy / distance) * settler.speed * (deltaTime / 1000);
-                settler.x += moveX;
-                settler.y += moveY;
-            } else {
-                // Reached target, perform activity
-                this.performSettlerActivity(settler);
-            }
-        });
-        
-        // Spawn new settlers based on population
-        while (this.settlers.length < Math.min(this.maxSettlers, Math.floor(this.population * 0.8))) {
-            this.spawnNewSettler();
-        }
-    }
-
-    assignSettlerActivity(settler) {
-        const nearbyBuildings = this.buildings.filter(building => {
-            const dist = Math.sqrt((building.x - settler.x) ** 2 + (building.y - settler.y) ** 2);
-            return dist < 150;
-        });
-        
-        switch (settler.type) {
-            case 'farmer':
-                const farms = nearbyBuildings.filter(b => b.type === 'farm');
-                if (farms.length > 0) {
-                    const farm = farms[Math.floor(Math.random() * farms.length)];
-                    settler.targetX = farm.x + Math.random() * farm.size;
-                    settler.targetY = farm.y + Math.random() * farm.size;
-                    settler.workBuilding = farm;
-                    settler.carryingResource = null;
-                } else {
-                    this.assignRandomMovement(settler);
-                }
-                break;
-                
-            case 'worker':
-                const workBuildings = nearbyBuildings.filter(b => 
-                    ['lumbermill', 'blacksmith', 'tradingpost'].includes(b.type)
-                );
-                if (workBuildings.length > 0) {
-                    const building = workBuildings[Math.floor(Math.random() * workBuildings.length)];
-                    settler.targetX = building.x + Math.random() * building.size;
-                    settler.targetY = building.y + Math.random() * building.size;
-                    settler.workBuilding = building;
-                    settler.carryingResource = this.getResourceForBuilding(building.type);
-                } else {
-                    this.assignRandomMovement(settler);
-                }
-                break;
-                
-            case 'child':
-                // Children play in open areas
-                settler.targetX = settler.x + (Math.random() - 0.5) * 80;
-                settler.targetY = settler.y + (Math.random() - 0.5) * 80;
-                settler.speed = 25 + Math.random() * 15; // Children move faster
-                break;
-                
-            case 'gatherer':
-                // Move to resource-rich areas
-                const resourceTile = this.findNearbyResourceTile(settler.x, settler.y);
-                if (resourceTile) {
-                    settler.targetX = resourceTile.x;
-                    settler.targetY = resourceTile.y;
-                    settler.carryingResource = resourceTile.resource;
-                } else {
-                    this.assignRandomMovement(settler);
-                }
-                break;
-        }
-    }
-
-    assignRandomMovement(settler) {
-        settler.targetX = settler.x + (Math.random() - 0.5) * 100;
-        settler.targetY = settler.y + (Math.random() - 0.5) * 100;
-    }
-
-    getResourceForBuilding(buildingType) {
-        const resourceMap = {
-            'lumbermill': 'wood',
-            'blacksmith': 'iron',
-            'tradingpost': 'gold',
-            'farm': 'food'
-        };
-        return resourceMap[buildingType] || null;
-    }
-
-    findNearbyResourceTile(x, y) {
-        for (let i = 0; i < 10; i++) {
-            const testX = x + (Math.random() - 0.5) * 200;
-            const testY = y + (Math.random() - 0.5) * 200;
-            const tileType = this.getTileAt(testX, testY);
-            
-            if (['conifer_forest', 'deciduous_forest'].includes(tileType)) {
-                return { x: testX, y: testY, resource: 'wood' };
-            }
-            if (['rocky_terrain', 'mountains'].includes(tileType)) {
-                return { x: testX, y: testY, resource: 'iron' };
-        }
-        return null;
-    }
-
-    performSettlerActivity(settler) {
-        if (settler.workBuilding && settler.carryingResource) {
-            // Simulate resource transport
-            if (Math.random() < 0.3) {
-                const amount = 0.5 + Math.random() * 0.5;
-                if (this.resources[settler.carryingResource] !== undefined) {
-                    this.resources[settler.carryingResource] += amount;
-                }
-            }
-        }
-    }
-
-    spawnNewSettler() {
-        const longhouses = this.buildings.filter(b => b.type === 'longhouse');
-        if (longhouses.length === 0) return;
-        
-        const spawnBuilding = longhouses[Math.floor(Math.random() * longhouses.length)];
-        const types = ['farmer', 'worker', 'child', 'gatherer'];
-        
-        this.settlers.push({
-            x: spawnBuilding.x + Math.random() * spawnBuilding.size,
-            y: spawnBuilding.y + Math.random() * spawnBuilding.size,
-            type: types[Math.floor(Math.random() * types.length)],
-            targetX: spawnBuilding.x,
-            targetY: spawnBuilding.y,
-            speed: 15 + Math.random() * 10,
-            activityTimer: 0,
-            activityDuration: 3000 + Math.random() * 5000,
-            carryingResource: null,
-            workBuilding: null,
-            age: 0
-        });
     }
     
     updateLightning(deltaTime) {
@@ -2734,34 +2383,6 @@ class MobileVikingSettlementTycoon {
         return branches;
     }
     
-    renderFireflies() {
-        if (this.fireflies.length === 0) return;
-        
-        this.ctx.save();
-        
-        this.fireflies.forEach(firefly => {
-            this.ctx.globalAlpha = firefly.brightness;
-            
-            // Firefly glow effect
-            this.ctx.shadowColor = '#ffff88';
-            this.ctx.shadowBlur = 6;
-            this.ctx.fillStyle = '#ffff88';
-            
-            this.ctx.beginPath();
-            this.ctx.arc(firefly.x, firefly.y, firefly.size, 0, Math.PI * 2);
-            this.ctx.fill();
-            
-            // Additional glow
-            this.ctx.globalAlpha = firefly.brightness * 0.3;
-            this.ctx.shadowBlur = 12;
-            this.ctx.beginPath();
-            this.ctx.arc(firefly.x, firefly.y, firefly.size * 2, 0, Math.PI * 2);
-            this.ctx.fill();
-        });
-        
-        this.ctx.restore();
-    }
-    
     renderLightning() {
         if (!this.lightningSystem.enabled || this.lightningSystem.strikes.length === 0) return;
         
@@ -2866,51 +2487,6 @@ class MobileVikingSettlementTycoon {
         this.ctx.restore();
     }
     
-    renderSettlers() {
-        this.settlers.forEach(settler => {
-            // Settler shadow
-            this.ctx.fillStyle = 'rgba(0,0,0,0.2)';
-            this.ctx.beginPath();
-            this.ctx.ellipse(settler.x + 1, settler.y + 1, 4, 2, 0, 0, Math.PI * 2);
-            this.ctx.fill();
-            
-            // Settler body based on type
-            const colors = {
-                'farmer': '#8bc34a',
-                'worker': '#ff9800',
-                'child': '#e91e63',
-                'gatherer': '#795548'
-            };
-            
-            this.ctx.fillStyle = colors[settler.type] || '#2196f3';
-            this.ctx.beginPath();
-            this.ctx.arc(settler.x, settler.y, 5, 0, Math.PI * 2);
-            this.ctx.fill();
-            
-            // Activity indicators
-            if (settler.carryingResource) {
-                const resourceColors = {
-                    'wood': '#8d6e63',
-                    'iron': '#9e9e9e',
-                    'food': '#4caf50',
-                    'gold': '#ffc107'
-                };
-                
-                this.ctx.fillStyle = resourceColors[settler.carryingResource] || '#666';
-                this.ctx.fillRect(settler.x - 2, settler.y - 8, 4, 3);
-            }
-            
-            // Movement trail for children (playing)
-            if (settler.type === 'child' && settler.age % 100 < 50) {
-                this.ctx.strokeStyle = 'rgba(233, 30, 99, 0.3)';
-                this.ctx.lineWidth = 2;
-                this.ctx.beginPath();
-                this.ctx.arc(settler.x, settler.y, 8, 0, Math.PI * 2);
-                this.ctx.stroke();
-            }
-        });
-    }
-    
     render() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         
@@ -2922,11 +2498,7 @@ class MobileVikingSettlementTycoon {
         
         this.renderTerrain();
         this.renderBuildings();
-        this.renderSettlers();
         this.renderScouts();
-        
-        // Render fireflies (in world space)
-        this.renderFireflies();
         
         // Render lightning (in world space)
         this.renderLightning();
@@ -2972,6 +2544,74 @@ class MobileVikingSettlementTycoon {
         if (timeElement) {
             timeElement.textContent = `${dayNightInfo.phase} ${timeString}`;
         }
+    }
+    
+    updateScouts(deltaTime) {
+        this.scouts.forEach(scout => {
+            if (scout.target && scout.exploring) {
+                const dx = scout.target.x - scout.x;
+                const dy = scout.target.y - scout.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance > 5) {
+                    const moveX = (dx / distance) * scout.speed * (deltaTime / 1000);
+                    const moveY = (dy / distance) * scout.speed * (deltaTime / 1000);
+                    
+                    scout.x += moveX;
+                    scout.y += moveY;
+                    
+                    this.revealArea(scout.x, scout.y, scout.range);
+                } else {
+                    scout.exploring = false;
+                    scout.target = null;
+                    this.revealArea(scout.x, scout.y, scout.range * 1.5);
+                    this.showMobileNotification('Area explored!', 'success');
+                }
+            }
+        });
+    }
+    
+    updateRevealAnimations() {
+        const now = Date.now();
+        
+        this.revealAnimations = this.revealAnimations.filter(anim => {
+            const elapsed = now - anim.startTime;
+            const progress = Math.min(elapsed / anim.duration, 1);
+            
+            anim.radius = anim.targetRadius * this.easeOutQuad(progress);
+            
+            const chunkKey = this.getChunkKey(anim.chunkX, anim.chunkY);
+            const fogData = this.fogOfWar.get(chunkKey);
+            const chunk = this.loadedChunks.get(chunkKey);
+            
+            if (fogData && chunk && isFinite(anim.radius) && anim.radius > 0) {
+                const ctx = fogData.ctx;
+                const localX = anim.x - chunk.worldX;
+                const localY = anim.y - chunk.worldY;
+                
+                if (isFinite(localX) && isFinite(localY) && isFinite(anim.radius)) {
+                    ctx.save();
+                    ctx.globalCompositeOperation = 'destination-out';
+                    
+                    const gradient = ctx.createRadialGradient(localX, localY, 0, localX, localY, anim.radius);
+                    gradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+                    gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.5)');
+                    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                    
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(localX, localY, anim.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
+            
+            return progress < 1;
+        });
+    }
+    
+    easeOutQuad(t) {
+        return 1 - (1 - t) * (1 - t);
     }
     
     renderTerrain() {
