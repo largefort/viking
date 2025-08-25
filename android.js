@@ -87,7 +87,28 @@ class MobileVikingSettlementTycoon {
         this.lastUpdate = 0;
         this.gameRunning = true;
         
-        this.init();
+        // Initialize splashscreen
+        this.initSplashScreen();
+    }
+    
+    initSplashScreen() {
+        // Show animated splashscreen for 7 seconds
+        const splashScreen = document.getElementById('splashScreen');
+        const gameContainer = document.getElementById('gameContainer');
+        
+        setTimeout(() => {
+            // Fade out splashscreen
+            splashScreen.classList.add('fade-out');
+            
+            // Show game container after fade transition
+            setTimeout(() => {
+                splashScreen.style.display = 'none';
+                gameContainer.style.display = 'flex';
+                
+                // Initialize game after splashscreen
+                this.init();
+            }, 500); // Wait for fade transition
+        }, 7000); // 7 second delay
     }
     
     collectDeviceInfo() {
@@ -3132,14 +3153,4 @@ window.addEventListener('load', () => {
     setTimeout(() => {
         game.loadGame();
     }, 100);
-});
-
-// Handle visibility change to pause/resume game
-document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-        // Game will continue running but at reduced performance when hidden
-        console.log('Game backgrounded - reducing performance');
-    } else {
-        console.log('Game foregrounded - restoring performance');
-    }
 });
