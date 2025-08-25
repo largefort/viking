@@ -36,6 +36,19 @@ class MobileVikingSettlementTycoon {
         this.pinchStartScale = 1;
         this.isPinching = false;
         
+        // Mobile-optimized sound system
+        this.soundSystem = {
+            enabled: true,
+            masterVolume: 0.6, // Lower default for mobile
+            musicVolume: 0.3,  // Quieter music on mobile
+            sfxVolume: 0.7,
+            currentAmbient: null,
+            sounds: {},
+            musicTracks: {},
+            loadingPromises: [],
+            mobileOptimized: true
+        };
+        
         // Enhanced infinite terrain system (mobile optimized)
         this.chunkSize = 256; // Smaller chunks for mobile performance
         this.tileSize = 16; // Smaller tiles for mobile optimization
@@ -128,6 +141,176 @@ class MobileVikingSettlementTycoon {
         
         this.setupMobileEventListeners();
         this.gameLoop();
+        
+        this.initializeMobileSoundSystem();
+    }
+    
+    initializeMobileSoundSystem() {
+        try {
+            // Mobile-specific audio initialization
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // Essential sounds only for mobile performance
+            const soundAssets = {
+                'ui_click': 'ui_click.mp3',
+                'notification_good': 'notification_good.mp3',
+                'notification_bad': 'notification_bad.mp3',
+                'build_hammer': 'build_hammer.mp3',
+                'resource_collect': 'resource_collect.mp3',
+                'viking_horn': 'viking_horn.mp3',
+                'thunder_distant': 'thunder_distant.mp3',
+                'ambient_forest': 'ambient_forest.mp3'
+            };
+            
+            // Load sounds with mobile optimization
+            for (const [key, filename] of Object.entries(soundAssets)) {
+                this.loadMobileSound(key, filename);
+            }
+            
+            // Setup mobile audio controls
+            this.setupMobileSoundControls();
+            
+            // Handle mobile audio context requirements
+            this.setupMobileAudioInteraction();
+            
+        } catch (error) {
+            console.warn('Mobile audio not supported:', error);
+            this.soundSystem.enabled = false;
+        }
+    }
+    
+    loadMobileSound(key, filename) {
+        try {
+            const audio = new Audio(filename);
+            audio.preload = 'metadata'; // Lighter preloading for mobile
+            audio.volume = this.soundSystem.sfxVolume * this.soundSystem.masterVolume;
+            
+            this.soundSystem.sounds[key] = {
+                audio: audio,
+                instances: [audio], // Single instance for mobile
+                currentInstance: 0
+            };
+            
+            if (key.startsWith('ambient_')) {
+                audio.loop = true;
+                this.soundSystem.musicTracks[key] = audio;
+            }
+            
+        } catch (error) {
+            console.warn(`Failed to load mobile sound ${key}:`, error);
+        }
+    }
+    
+    setupMobileAudioInteraction() {
+        // Mobile browsers require user interaction to start audio
+        const startAudio = () => {
+            if (this.audioContext && this.audioContext.state === 'suspended') {
+                this.audioContext.resume().then(() => {
+                    console.log('Mobile audio context resumed');
+                    this.playAmbientMusic('ambient_forest');
+                });
+            }
+            
+            // Remove listeners after first interaction
+            document.removeEventListener('touchstart', startAudio);
+            document.removeEventListener('click', startAudio);
+        };
+        
+        document.addEventListener('touchstart', startAudio, { once: true });
+        document.addEventListener('click', startAudio, { once: true });
+    }
+    
+    playMobileSound(soundKey, volume = 1.0) {
+        if (!this.soundSystem.enabled) return;
+        
+        const soundData = this.soundSystem.sounds[soundKey];
+        if (!soundData) return;
+        
+        try {
+            const instance = soundData.audio;
+            instance.currentTime = 0;
+            instance.volume = Math.max(0, Math.min(1, 
+                volume * this.soundSystem.sfxVolume * this.soundSystem.masterVolume
+            ));
+            
+            const playPromise = instance.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    // Silently handle mobile audio errors
+                    console.debug(`Mobile audio play error for ${soundKey}`);
+                });
+            }
+        } catch (error) {
+            console.debug(`Mobile sound error ${soundKey}:`, error);
+        }
+    }
+    
+    playAmbientMusic(trackKey) {
+        if (!this.soundSystem.enabled) return;
+        
+        const track = this.soundSystem.musicTracks[trackKey];
+        if (!track) return;
+        
+        try {
+            // Stop current ambient
+            if (this.soundSystem.currentAmbient) {
+                const currentTrack = this.soundSystem.musicTracks[this.soundSystem.currentAmbient];
+                if (currentTrack) {
+                    currentTrack.pause();
+                }
+            }
+            
+            track.volume = this.soundSystem.musicVolume * this.soundSystem.masterVolume;
+            track.currentTime = 0;
+            
+            const playPromise = track.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    this.soundSystem.currentAmbient = trackKey;
+                }).catch(error => {
+                    console.debug(`Mobile ambient play error: ${trackKey}`);
+                });
+            }
+        } catch (error) {
+            console.debug(`Mobile ambient error ${trackKey}:`, error);
+        }
+    }
+    
+    setupMobileSoundControls() {
+        // Add sound toggle to mobile UI
+        const soundToggleHtml = `
+            <button id="mobileSoundToggle" class="mobile-sound-toggle" 
+                    style="position: absolute; top: 10px; right: 50px; background: rgba(0,0,0,0.7); 
+                           color: white; border: none; padding: 10px; border-radius: 5px; font-size: 16px;">
+                ${this.soundSystem.enabled ? '🔊' : '🔇'}
+            </button>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', soundToggleHtml);
+        
+        document.getElementById('mobileSoundToggle').addEventListener('click', () => {
+            this.toggleMobileSound();
+        });
+    }
+    
+    toggleMobileSound() {
+        this.soundSystem.enabled = !this.soundSystem.enabled;
+        
+        if (!this.soundSystem.enabled) {
+            Object.values(this.soundSystem.musicTracks).forEach(track => {
+                track.pause();
+            });
+        } else {
+            this.playAmbientMusic('ambient_forest');
+        }
+        
+        document.getElementById('mobileSoundToggle').textContent = 
+            this.soundSystem.enabled ? '🔊' : '🔇';
+        
+        this.showMobileNotification(
+            this.soundSystem.enabled ? 'Sound enabled' : 'Sound disabled', 
+            'info'
+        );
     }
     
     setupCanvas() {
@@ -207,6 +390,8 @@ class MobileVikingSettlementTycoon {
     }
     
     switchTab(tabName) {
+        this.playMobileSound('ui_click', 0.5);
+        
         // Update tab buttons
         document.querySelectorAll('.mobile-tab').forEach(tab => {
             tab.classList.remove('active');
@@ -223,6 +408,7 @@ class MobileVikingSettlementTycoon {
     }
     
     selectMobileBuilding(buildingType) {
+        this.playMobileSound('ui_click');
         this.selectedBuilding = buildingType;
         this.placementMode = true;
         
@@ -417,16 +603,52 @@ class MobileVikingSettlementTycoon {
     }
     
     sendScoutToExplore(x, y) {
-        if (this.scouts.length === 0) {
-            this.showMobileNotification('No scouts available!', 'warning');
-            return;
+        try {
+            if (this.scouts.length === 0) {
+                this.playMobileSound('notification_bad');
+                this.showMobileNotification('No scouts available - creating new scout!', 'warning');
+                this.spawnInitialScout();
+                return;
+            }
+            
+            // Validate coordinates
+            if (!isFinite(x) || !isFinite(y) || Math.abs(x) > 500000 || Math.abs(y) > 500000) {
+                this.showMobileNotification('Invalid exploration target!', 'error');
+                return;
+            }
+            
+            const scout = this.scouts[0];
+            
+            // Validate scout before assigning target
+            if (!this.validateScoutData(scout)) {
+                console.error('Scout corrupted, creating new one');
+                this.scouts.splice(0, 1);
+                this.spawnInitialScout();
+                this.showMobileNotification('Scout was corrupted - created new one', 'warning');
+                return;
+            }
+            
+            // Check if scout is already exploring
+            if (scout.exploring && scout.target) {
+                this.showMobileNotification('Scout is already exploring - wait for completion', 'info');
+                return;
+            }
+            
+            scout.target = { x, y };
+            scout.exploring = true;
+            
+            this.playMobileSound('notification_good');
+            this.showMobileNotification('Scout dispatched to explore!', 'success');
+            
+            // Auto-save after scout dispatch to prevent corruption
+            setTimeout(() => {
+                this.saveMobileGame();
+            }, 1000);
+            
+        } catch (error) {
+            console.error('Error dispatching scout:', error);
+            this.showMobileNotification('Failed to dispatch scout - please try again', 'error');
         }
-        
-        const scout = this.scouts[0];
-        scout.target = { x, y };
-        scout.exploring = true;
-        
-        this.showMobileNotification('Scout dispatched!', 'success');
     }
     
     tryPlaceMobileBuilding(screenX, screenY) {
@@ -436,19 +658,23 @@ class MobileVikingSettlementTycoon {
         if (!buildingData) return;
         
         if (!this.canAfford(buildingData.cost)) {
+            this.playMobileSound('notification_bad');
             this.showMobileNotification('Not enough resources!', 'error');
             return;
         }
         
         if (!this.isValidPlacement(worldPos.x, worldPos.y)) {
+            this.playMobileSound('notification_bad');
             this.showMobileNotification('Invalid location!', 'warning');
             return;
         }
         
+        this.playMobileSound('build_hammer');
         this.addBuilding(this.selectedBuilding, worldPos.x, worldPos.y);
         this.spendResources(buildingData.cost);
         this.cancelMobilePlacement();
         
+        this.playMobileSound('notification_good');
         this.showMobileNotification(`${buildingData.name} built!`, 'success');
     }
     
@@ -471,6 +697,13 @@ class MobileVikingSettlementTycoon {
         setTimeout(() => {
             notification.remove();
         }, 3000);
+        
+        // Play appropriate notification sound
+        if (type === 'success') {
+            this.playMobileSound('notification_good', 0.6);
+        } else if (type === 'error' || type === 'warning') {
+            this.playMobileSound('notification_bad', 0.6);
+        }
     }
     
     showDeviceInfoModal() {
@@ -530,6 +763,12 @@ class MobileVikingSettlementTycoon {
     
     saveMobileGame() {
         try {
+            // Validate critical data before saving
+            if (!this.validateGameStateBeforeSave()) {
+                this.showMobileNotification('Game state validation failed - save aborted', 'error');
+                return false;
+            }
+            
             // Convert fog of war data to serializable format (simplified approach)
             const fogOfWarData = {};
             for (const [chunkKey, fogData] of this.fogOfWar) {
@@ -567,8 +806,8 @@ class MobileVikingSettlementTycoon {
                     speed: scout.speed,
                     health: scout.health || 100,
                     range: scout.range || 40,
-                    exploring: false,
-                    target: null
+                    exploring: false, // Don't save exploring state to prevent corruption
+                    target: null      // Don't save target to prevent corruption
                 })),
                 seed: this.seed,
                 exploredAreas: Array.from(this.exploredAreas),
@@ -585,8 +824,9 @@ class MobileVikingSettlementTycoon {
             }
             
             localStorage.setItem('vikingSettlementMobile', testString);
-            this.showMobileNotification('Game saved!', 'success');
+            this.showMobileNotification('Game saved successfully!', 'success');
             console.log('Mobile game saved successfully');
+            return true;
             
         } catch (error) {
             console.error('Failed to save mobile game:', error);
@@ -626,34 +866,83 @@ class MobileVikingSettlementTycoon {
                 };
                 
                 localStorage.setItem('vikingSettlementMobile', JSON.stringify(fallbackState));
-                this.showMobileNotification('Game saved (limited)!', 'warning');
+                this.showMobileNotification('Game saved (limited data)!', 'warning');
                 console.log('Mobile game saved with fallback method');
+                return true;
                 
             } catch (fallbackError) {
                 console.error('Fallback save also failed:', fallbackError);
-                this.showMobileNotification('Failed to save game!', 'error');
+                this.showMobileNotification('❌ FAILED TO SAVE GAME', 'error');
+                return false;
             }
+        }
+    }
+
+    validateGameStateBeforeSave() {
+        try {
+            // Check basic game state
+            if (!this.resources || typeof this.resources !== 'object') return false;
+            if (typeof this.population !== 'number' || !isFinite(this.population)) return false;
+            if (!Array.isArray(this.buildings)) return false;
+            if (!this.camera || typeof this.camera !== 'object') return false;
+            if (!Array.isArray(this.scouts)) return false;
+            
+            // Validate scouts before saving
+            for (let scout of this.scouts) {
+                if (!this.validateScoutData(scout)) {
+                    console.error('Invalid scout found before save:', scout);
+                    return false;
+                }
+            }
+            
+            return true;
+        } catch (error) {
+            console.error('Game state validation error:', error);
+            return false;
+        }
+    }
+
+    validateScoutData(scoutData) {
+        try {
+            if (!scoutData || typeof scoutData !== 'object') return false;
+            if (typeof scoutData.x !== 'number' || !isFinite(scoutData.x)) return false;
+            if (typeof scoutData.y !== 'number' || !isFinite(scoutData.y)) return false;
+            if (typeof scoutData.speed !== 'number' || !isFinite(scoutData.speed) || scoutData.speed <= 0) return false;
+            if (typeof scoutData.health !== 'number' || !isFinite(scoutData.health)) return false;
+            if (typeof scoutData.range !== 'number' || !isFinite(scoutData.range) || scoutData.range <= 0) return false;
+            
+            // Check for reasonable bounds
+            if (Math.abs(scoutData.x) > 1000000 || Math.abs(scoutData.y) > 1000000) return false;
+            if (scoutData.speed > 1000 || scoutData.health > 10000 || scoutData.range > 1000) return false;
+            
+            return true;
+        } catch (error) {
+            console.error('Scout validation error:', error);
+            return false;
         }
     }
     
     loadGame() {
         try {
             const saved = localStorage.getItem('vikingSettlementMobile');
-            if (!saved) return false;
+            if (!saved) {
+                this.showMobileNotification('No saved game found, starting fresh!', 'info');
+                return false;
+            }
 
             const gameState = JSON.parse(saved);
             
             // Verify version compatibility
             if (!gameState.version || gameState.version !== this.gameVersion) {
                 console.warn('Version mismatch or missing version in save');
-                // Don't reject - attempt to load anyway with warning
-                this.showMobileNotification('Save version different, loading anyway...', 'warning');
+                this.showMobileNotification('Save from different version - may have issues', 'warning');
             }
 
             // Validate save data integrity
             if (!this.validateSaveData(gameState)) {
-                this.showMobileNotification('Save data corrupted, starting fresh', 'error');
+                this.showMobileNotification('⚠️ SAVE DATA CORRUPTED - Starting Fresh Game', 'error');
                 localStorage.removeItem('vikingSettlementMobile');
+                this.resetGameProgress();
                 return false;
             }
             
@@ -689,26 +978,38 @@ class MobileVikingSettlementTycoon {
                 };
             }
             
-            // Restore scouts
+            // Restore scouts with corruption detection
             this.scouts = [];
             if (gameState.scouts && Array.isArray(gameState.scouts)) {
-                gameState.scouts.forEach(savedScout => {
-                    const scout = {
-                        x: savedScout.x || 0,
-                        y: savedScout.y || 0,
-                        speed: savedScout.speed || 20,
-                        health: savedScout.health || 100,
-                        range: savedScout.range || 40,
-                        exploring: false,
-                        target: null
-                    };
-                    this.scouts.push(scout);
-                });
+                try {
+                    gameState.scouts.forEach(savedScout => {
+                        // Validate scout data
+                        if (this.validateScoutData(savedScout)) {
+                            const scout = {
+                                x: savedScout.x || 0,
+                                y: savedScout.y || 0,
+                                speed: savedScout.speed || 20,
+                                health: savedScout.health || 100,
+                                range: savedScout.range || 40,
+                                exploring: false, // Always reset to prevent stuck scouts
+                                target: null      // Always reset target to prevent corruption
+                            };
+                            this.scouts.push(scout);
+                        } else {
+                            console.warn('Invalid scout data detected, skipping');
+                        }
+                    });
+                } catch (scoutError) {
+                    console.error('Scout data corrupted:', scoutError);
+                    this.showMobileNotification('Scout data corrupted - creating new scout', 'warning');
+                    this.scouts = [];
+                }
             }
             
             // Ensure at least one scout exists
             if (this.scouts.length === 0) {
                 this.spawnInitialScout();
+                this.showMobileNotification('Created new scout - your previous scout was corrupted', 'warning');
             }
             
             // Restore other properties
@@ -740,19 +1041,24 @@ class MobileVikingSettlementTycoon {
             this.updateMobilePopulationDisplay();
             this.updateMobileStatsDisplay();
             
-            this.showMobileNotification('Game loaded!', 'success');
+            this.showMobileNotification('Game loaded successfully!', 'success');
             console.log('Mobile game loaded successfully');
             return true;
             
         } catch (error) {
             console.error('Failed to load mobile game:', error);
             
+            // Show clear error message to user
+            this.showMobileNotification('⚠️ SAVE GAME CORRUPTED - Starting Fresh', 'error');
+            
             // Try to recover by removing corrupted save
             try {
                 localStorage.removeItem('vikingSettlementMobile');
-                this.showMobileNotification('Corrupted save removed, starting fresh', 'warning');
+                this.resetGameProgress();
+                this.showMobileNotification('Corrupted save removed - fresh game started', 'info');
             } catch (cleanupError) {
                 console.error('Failed to cleanup corrupted save:', cleanupError);
+                this.showMobileNotification('Failed to clean corrupted save - please clear browser data', 'error');
             }
             
             return false;
@@ -2121,6 +2427,8 @@ class MobileVikingSettlementTycoon {
     
     resetGameProgress() {
         try {
+            this.playMobileSound('viking_horn', 0.8);
+            
             this.resources = { food: 100, wood: 50, iron: 25, gold: 10 };
             this.population = 5;
             this.buildings = [];
@@ -2230,12 +2538,20 @@ class MobileVikingSettlementTycoon {
             const timeSince = now - building.lastUpdate;
             if (timeSince > 3000) {
                 if (building.produces) {
+                    let producedSomething = false;
                     for (const [resource, amount] of Object.entries(building.produces)) {
                         if (resource === 'population') {
                             this.population += amount;
+                            producedSomething = true;
                         } else if (this.resources.hasOwnProperty(resource)) {
                             this.resources[resource] += amount;
+                            producedSomething = true;
                         }
+                    }
+                    
+                    // Less frequent sound effects on mobile
+                    if (producedSomething && Math.random() < 0.2) {
+                        this.playMobileSound('resource_collect', 0.3);
                     }
                 }
                 building.lastUpdate = now;
@@ -2300,6 +2616,13 @@ class MobileVikingSettlementTycoon {
         const startY = screenBounds.top - 150; // Start above visible area
         const endX = startX + (Math.random() - 0.5) * 200; // Less variance for mobile
         const endY = screenBounds.bottom + 50; // End below visible area
+        
+        // Play thunder with mobile-optimized delay
+        if (Math.random() < 0.5) { // Less frequent for mobile
+            setTimeout(() => {
+                this.playMobileSound('thunder_distant', 0.4);
+            }, 500 + Math.random() * 1500);
+        }
         
         // Create lightning bolt (simplified for mobile)
         const lightning = {
@@ -2547,26 +2870,71 @@ class MobileVikingSettlementTycoon {
     }
     
     updateScouts(deltaTime) {
-        this.scouts.forEach(scout => {
-            if (scout.target && scout.exploring) {
-                const dx = scout.target.x - scout.x;
-                const dy = scout.target.y - scout.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                if (distance > 5) {
-                    const moveX = (dx / distance) * scout.speed * (deltaTime / 1000);
-                    const moveY = (dy / distance) * scout.speed * (deltaTime / 1000);
-                    
-                    scout.x += moveX;
-                    scout.y += moveY;
-                    
-                    this.revealArea(scout.x, scout.y, scout.range);
-                } else {
-                    scout.exploring = false;
-                    scout.target = null;
-                    this.revealArea(scout.x, scout.y, scout.range * 1.5);
-                    this.showMobileNotification('Area explored!', 'success');
+        this.scouts.forEach((scout, index) => {
+            try {
+                // Validate scout state before processing
+                if (!this.validateScoutData(scout)) {
+                    console.error('Scout corruption detected during update, removing scout:', scout);
+                    this.scouts.splice(index, 1);
+                    this.showMobileNotification('Corrupted scout removed - spawning new one', 'warning');
+                    this.spawnInitialScout();
+                    return;
                 }
+                
+                if (scout.target && scout.exploring) {
+                    const dx = scout.target.x - scout.x;
+                    const dy = scout.target.y - scout.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    // Check for infinite/NaN distances
+                    if (!isFinite(distance)) {
+                        console.error('Invalid distance calculated for scout:', scout);
+                        scout.exploring = false;
+                        scout.target = null;
+                        this.showMobileNotification('Scout had navigation error - reset', 'warning');
+                        return;
+                    }
+                    
+                    if (distance > 5) {
+                        const moveX = (dx / distance) * scout.speed * (deltaTime / 1000);
+                        const moveY = (dy / distance) * scout.speed * (deltaTime / 1000);
+                        
+                        // Validate movement values
+                        if (isFinite(moveX) && isFinite(moveY)) {
+                            scout.x += moveX;
+                            scout.y += moveY;
+                            
+                            // Bounds check
+                            if (Math.abs(scout.x) > 500000 || Math.abs(scout.y) > 500000) {
+                                console.error('Scout moved out of bounds, resetting position');
+                                scout.x = this.camera.x;
+                                scout.y = this.camera.y;
+                                scout.exploring = false;
+                                scout.target = null;
+                                this.showMobileNotification('Scout was lost - returned to base', 'warning');
+                                return;
+                            }
+                            
+                            this.revealArea(scout.x, scout.y, scout.range);
+                        } else {
+                            console.error('Invalid movement calculated for scout');
+                            scout.exploring = false;
+                            scout.target = null;
+                            this.showMobileNotification('Scout navigation error - stopped', 'warning');
+                        }
+                    } else {
+                        scout.exploring = false;
+                        scout.target = null;
+                        this.revealArea(scout.x, scout.y, scout.range * 1.5);
+                        this.showMobileNotification('Area explored!', 'success');
+                    }
+                }
+            } catch (scoutError) {
+                console.error('Scout update error:', scoutError);
+                // Remove problematic scout
+                this.scouts.splice(index, 1);
+                this.showMobileNotification('Scout error fixed - spawning replacement', 'warning');
+                this.spawnInitialScout();
             }
         });
     }
