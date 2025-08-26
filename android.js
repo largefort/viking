@@ -126,8 +126,8 @@ class MobileVikingSettlementTycoon {
                 
                 // Initialize game after splashscreen
                 this.init();
-            }, 500); // Wait for fade transition
-        }, 5000); // 5 second delay to prevent looping
+            }, 400); // Wait for fade transition
+        }, 4000); // 5 second delay to prevent looping
     }
     
     collectDeviceInfo() {
